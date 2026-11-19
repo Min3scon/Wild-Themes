@@ -146,6 +146,9 @@ code{font:13px var(--mono);color:var(--fg)}
 .st-card{all:unset;cursor:pointer;border-radius:10px;overflow:hidden;background:var(--card);border:1px solid var(--border);transition:border-color .15s}
 .st-card img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;background:var(--muted)}
 .st-card span{display:block;padding:7px 10px;font-size:14px;font-weight:500}
+.st-card{position:relative}.st-card i{display:block;width:100%;aspect-ratio:16/9}
+.st-card em{position:absolute;top:6px;left:6px;font:600 11px/1 var(--sans);font-style:normal;background:#000b;padding:3px 6px;border-radius:5px}
+.st-import{margin-top:12px}
 .st-card:hover{border-color:var(--border-hi)}.st-card[aria-checked=true]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
 .st-card.want{box-shadow:0 0 0 2px var(--primary)}.st-card[aria-busy=true]{opacity:.5}.st-card:focus-visible{outline:2px solid var(--accent)}
 .look{display:flex;flex-direction:column;gap:12px;margin-top:16px}.look h2{font:600 12px/1 var(--sans);text-transform:uppercase;letter-spacing:.08em;color:var(--mfg);margin:8px 0 0}

@@ -10,6 +10,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono&family=Outfit:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="site.css">
+<script>/* As the Office add-in, these same pages run inside Word, PowerPoint and Excel (addin/office-host.js). */
+try { if (/[?&]host=office\b/.test(location.search)) sessionStorage.setItem("wt-host", "office");
+  if (sessionStorage.getItem("wt-host") === "office") document.write('<script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"><\/script><script src="addin/office-host.js"><\/script>'); } catch (_) {}</script>
 </head>
 <body>
 <header class="nav">

@@ -120,7 +120,13 @@ let tools = null;
 const script = (src) => new Promise((ok, no) => document.head.append(Object.assign(document.createElement("script"), { src, onload: ok, onerror: no })));
 const loadTools = () => tools ||= ["vendor/jszip.min.js", "lib/stamper.js", "lib/stamper-pptx.js", "lib/stamper-xlsx.js", "lib/assets.js", "lib/wtcore.js"]
   .reduce((p, f) => p.then(() => script(EXT + f)), Promise.resolve());
-function save(data, name, type) {
+// The Office add-in is this page inside Word, PowerPoint or Excel (addin/office-host.js).
+let office = null;
+if (self.WTOffice) WTOffice.ready.then((o) => { office = o; });
+async function save(data, name, type) {
+  if (office && office.host === "word" && /\.docx$/.test(name)) {   // a new Word document opens in Word rather than downloading
+    return office.openCopy(new Uint8Array(await new Blob([data]).arrayBuffer()), "docx");
+  }
   const url = URL.createObjectURL(data instanceof Blob ? data : new Blob([data], { type: type || "application/octet-stream" }));
   Object.assign(document.createElement("a"), { href: url, download: name }).click();
   setTimeout(() => URL.revokeObjectURL(url), 30000);
@@ -153,6 +159,29 @@ async function themeFile(t, file, say) {
     say(`Saved “${m[1]} (${t.name})${m[2]}”. The theme is inside it and checked.`, "ok");
   } catch (e) { say("That file couldn't be themed: " + e.message, "bad"); }
 }
+// In the add-in the theme goes into the open document (checked after), not into a download.
+let docBusy = false;
+async function themeDoc(t, say) {
+  if (docBusy) return;
+  docBusy = true; say("Adding the theme…");
+  try {
+    await loadTools();
+    const { th, img } = await forFiles(t), before = await office.read(), was = await WTCore.inspect(before);
+    const out = await WTCore.apply(before, th, { ...(was.settings || {}), animated: motion }, WWAssets.maker(EXT, async () => img), "Wild Themes add-in");
+    say(office.canSwap() ? "Saving it into this file…" : "Opening the result in a new window…");
+    const res = await office.commit(out);
+    say(...office.report(res, res.copied ? null : await WTCore.inspect(res.bytes), th.id, `${t.name} is saved in the file.`));
+  } catch (e) { say("That file couldn't be themed: " + ((e && e.message) || e), "bad"); }
+  finally { docBusy = false; }
+}
+function docDrop(drop, go) {
+  $("input", drop).remove();
+  $("b", drop).textContent = `Save it into this ${office.where()}`;
+  $("span", drop).textContent = office.canSwap() ? "Written into the open file, then checked. Nothing is uploaded." : "Opens as a themed copy for you to save. Nothing is uploaded.";
+  drop.tabIndex = 0; drop.setAttribute("role", "button");
+  drop.onclick = go;
+  drop.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } };
+}
 function wireDrop(drop, onFile) {
   const input = $("input", drop);
   input.onchange = () => { onFile(input.files[0]); input.value = ""; };
@@ -164,8 +193,8 @@ const sayer = (m) => (text, cls = "") => { m.textContent = text; m.className = "
 const actions = {
   async starter(t, say) {
     await loadTools(); const { th, img } = await forFiles(t);
-    save(await WWStamper.newDocument(th, await stillify(await WWAssets.assetsFor(th, "docx", WWStamper.NEW_DOC_SECTION, EXT, img))), `${t.name}.docx`);
-    say && say(`Saved “${t.name}.docx”.`, "ok");
+    const opened = await save(await WWStamper.newDocument(th, await stillify(await WWAssets.assetsFor(th, "docx", WWStamper.NEW_DOC_SECTION, EXT, img))), `${t.name}.docx`);
+    say && say(opened ? `“${t.name}” opened as a new document.` : `Saved “${t.name}.docx”.`, "ok");
   },
   async teams(t, say) {
     await loadTools(); const { th, img } = await forFiles(t);
@@ -215,7 +244,8 @@ function openTheme(t) {
   $(".pills", body).append(...pills(t));
   $(".desc", body).textContent = t.blurb;
   $(".stage", body).srcdoc = sceneDoc(t, true);
-  wireDrop($(".drop", body), (f) => themeFile(t, f, say));
+  if (office) docDrop($(".drop", body), () => themeDoc(t, say));
+  else wireDrop($(".drop", body), (f) => themeFile(t, f, say));
   const st = $("[data-studio]", body); if (st && t.kind !== "local") st.href = "studio.html?theme=" + encodeURIComponent(t.id);
   $$("[data-a]", body).forEach((b) => b.onclick = () => {
     actions[b.dataset.a](t, say).catch((e) => say(e.message, "bad"));
@@ -263,7 +293,8 @@ function openMaker(share) {
     } catch (_) { say("That picture couldn't be opened. Try a PNG or JPG.", "bad"); }
   };
   const ready = () => kind === "colours" || t.image || (say("Choose a picture first, or switch to Colours.", "bad"), false);
-  wireDrop($("#m-drop", body), (f) => ready() && themeFile({ ...t, name: $("#m-name", body).value.trim() || t.name }, f, say));
+  if (office) docDrop($("#m-drop", body), () => ready() && themeDoc({ ...t, name: $("#m-name", body).value.trim() || t.name }, say));
+  else wireDrop($("#m-drop", body), (f) => ready() && themeFile({ ...t, name: $("#m-name", body).value.trim() || t.name }, f, say));
   $("#m-ext", body).onclick = () => ready() && actions.ext({ ...t, id: "local-" + Date.now().toString(36), name: $("#m-name", body).value.trim() || t.name }, say);
   $("#m-teams", body).onclick = () => ready() && actions.teams(t, say);
   $("#m-go", body).onclick = () => {

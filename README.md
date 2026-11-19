@@ -41,7 +41,7 @@ Install once; the code and the theme list update themselves from the website.
 - **Windows:** put `manifest.xml` in a shared folder, add it under File › Options › Trust Center › Trust Center Settings › Trusted Add-in Catalogs (tick "Show in Menu"), restart, then Home › Add-ins › Shared Folder.
 - **Mac:** copy `manifest.xml` into `~/Library/Containers/com.microsoft.Word/Data/Documents/wef` (and the same for `com.microsoft.Powerpoint`, `com.microsoft.Excel`), restart.
 
-Then Home › **Themes**. The pane reads the open file, shows its theme and whether it's intact, and lets you apply, change, tune (look and effects), restore or remove it. Word and PowerPoint are changed in place; "Open a themed copy" gives an exact rebuilt file in a new window instead. Excel doesn't let add-ins replace a whole workbook, so the themed workbook opens as a copy to save. Turn on "Open Wild Themes by itself…" to have the pane open when a themed file is opened (Office versions with the shared runtime).
+Then Home › **Themes**. The pane is the website itself (the File studio and the gallery), working on the open file: it reads it, shows its theme and whether it's intact, and lets you apply, change, tune (look and effects), restore or remove it. Word and PowerPoint are changed in place; "Open a themed copy" gives an exact rebuilt file in a new window instead. Excel doesn't let add-ins replace a whole workbook, so the themed workbook opens as a copy to save. Turn on "Open Wild Themes by itself…" to have the pane open when a themed file is opened (Office versions with the shared runtime).
 
 ## Teams
 
