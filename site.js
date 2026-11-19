@@ -171,12 +171,36 @@ const actions = {
     save(await WWAssets.teams(th, EXT, img), `${t.name} (Teams).jpg`, "image/jpeg"); say("Saved. In a Teams meeting: Video effects › Add new.", "ok");
   },
   async ext(t, say) {
-    if (t.kind === "builtin") return say("It's built into the extension. Click the Wild Themes icon in Word and pick it.", "ok");
-    await loadTools(); const { th, img } = await forFiles(t);
-    save(JSON.stringify({ wildtheme: 1, theme: { name: th.name, mode: th.mode, accent: th.accent, accent2: th.accent2, colors: th.colors, particles: th.particles, image: th.image, fx: "dot" }, image: img }), `${t.name}.wildtheme`, "application/json");
-    say("Saved. In the extension: Custom themes › Import a theme file.", "ok");
+    // With the extension installed, its site bridge switches the theme right away.
+    if (!document.documentElement.dataset.wildThemesExtension) {
+      say("Add the extension first, then press this again.", "bad");
+      return setTimeout(openInstall, 900);
+    }
+    let theme = { builtin: true, id: t.id, name: t.name };
+    if (t.kind !== "builtin") {
+      await loadTools(); const { th, img } = await forFiles(t);
+      theme = { key: t.id, name: th.name, mode: th.mode, accent: th.accent, accent2: th.accent2, colors: th.colors, effect: th.particles, image: img, thumb: await thumbOf(th, img) };
+    }
+    const done = new Promise((ok) => {
+      const on = (e) => { if (e.source === window && e.data && e.data.wt === "used") { removeEventListener("message", on); ok(e.data.ok); } };
+      addEventListener("message", on);
+      setTimeout(() => { removeEventListener("message", on); ok(null); }, 3000);
+    });
+    postMessage({ wt: "use", theme }, location.origin);
+    const r = await done;
+    say(r ? `Done. Wild Themes now uses ${t.name}. Open or switch to a document to see it.` : r === false ? "The extension couldn't take that theme." : "The extension didn't answer. Reload this page and try again.", r ? "ok" : "bad");
   },
 };
+// small card picture for the extension popup
+async function thumbOf(th, img) {
+  const c = Object.assign(document.createElement("canvas"), { width: 192, height: 108 }), g = c.getContext("2d");
+  if (img) { const b = await createImageBitmap(await (await fetch(img)).blob()), s = Math.max(192 / b.width, 108 / b.height); g.drawImage(b, (192 - b.width * s) / 2, (108 - b.height * s) / 2, b.width * s, b.height * s); }
+  else {
+    const col = th.colors || ["#111", th.accent, th.accent2]; g.fillStyle = col[0]; g.fillRect(0, 0, 192, 108);
+    for (const [x, y, k] of [[0, 0, 1], [192, 108, 2]]) { const r = g.createRadialGradient(x, y, 0, x, y, 200); r.addColorStop(0, col[k]); r.addColorStop(1, col[k] + "00"); g.fillStyle = r; g.fillRect(0, 0, 192, 108); }
+  }
+  return c.toDataURL("image/jpeg", .8);
+}
 async function quick(t, a, btn) {
   const was = btn.textContent; btn.textContent = "Making…"; btn.disabled = true;
   try { await actions[a](t); btn.textContent = "Saved"; } catch (_) { btn.textContent = "Try again"; }
@@ -239,7 +263,7 @@ function openMaker(share) {
   };
   const ready = () => kind === "colours" || t.image || (say("Choose a picture first, or switch to Colours.", "bad"), false);
   wireDrop($("#m-drop", body), (f) => ready() && themeFile({ ...t, name: $("#m-name", body).value.trim() || t.name }, f, say));
-  $("#m-ext", body).onclick = () => ready() && actions.ext({ ...t, name: $("#m-name", body).value.trim() || t.name }, say);
+  $("#m-ext", body).onclick = () => ready() && actions.ext({ ...t, id: "local-" + Date.now().toString(36), name: $("#m-name", body).value.trim() || t.name }, say);
   $("#m-teams", body).onclick = () => ready() && actions.teams(t, say);
   $("#m-go", body).onclick = () => {
     const name = $("#m-name", body).value.trim().slice(0, 30);
