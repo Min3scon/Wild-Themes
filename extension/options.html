@@ -3,22 +3,22 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="options.css"></head>
 <body>
 <header><b class="logo" aria-hidden="true"></b><h1>Wild Themes</h1>
-  <nav class="seg" role="tablist"><button role="tab" data-tab="file">Save a theme into a file</button><button role="tab" data-tab="custom">Custom themes</button></nav>
+  <nav class="seg" role="tablist"><button role="tab" data-tab="file">Theme</button><button role="tab" data-tab="custom">Custom themes</button></nav>
 </header>
 
 <section id="tab-file" role="tabpanel">
-  <h2>Save a theme into a file</h2>
-  <p class="lede">Works with Word (.docx), PowerPoint (.pptx) and Excel (.xlsx). The theme is written into the file itself: backdrop, colours, fonts and hidden file properties. Anyone who opens it sees it, on the desktop apps or the web, with nothing installed. Your own text and colours are left exactly as they are.</p>
+  <h2>Choose a theme</h2>
+  <p class="lede">Pick a theme: Word and Teams on the web and the Wild Themes desktop app switch to it straight away.</p><p hidden>the theme is written into the file itself: backdrop, colours, fonts and hidden file properties. Anyone who opens it sees it, on the desktop apps or the web, with nothing installed. Your own text and colours are left exactly as they are.</p>
   <ol class="steps">
 
-    <li><label for="pick">Pick a theme</label><select id="pick"></select></li>
-    <li><label class="drop" id="drop"><input type="file" id="docx" accept=".docx,.docm,.pptx,.pptm,.xlsx,.xlsm">
-      <b id="dropname">Choose a Word, PowerPoint or Excel file</b><span>or drop it here. The themed copy downloads straight away. On the web, get the file with File › Save As › Download a Copy.</span></label></li>
-    <li><div class="actions"><button id="stamp" class="btn primary" disabled>Make it again</button>
+    <li><label for="pick">Theme (applies right away)</label><select id="pick"></select></li>
+    <li hidden><label class="drop" id="drop"><input type="file" id="docx" accept=".docx,.docm">
+      <b id="dropname">Choose a Word file</b><span>or drop it here. The themed copy downloads straight away. On the web, get the file with File › Save As › Download a Copy.</span></label></li>
+    <li hidden><div class="actions"><button id="stamp" class="btn primary" disabled>Make it again</button>
       <button id="blank" class="btn">New Word document with this theme</button>
       <button id="teamsbg" class="btn">Teams meeting background</button>
       <button id="unstamp" class="btn" disabled>Remove the theme from this file</button></div></li>
-    <li>Upload the themed copy to OneDrive (or replace the original). Done: it carries the theme everywhere. For Teams, add the meeting background under Video effects › More video effects › Add new.</li>
+    <li hidden>Upload the themed copy to OneDrive (or replace the original). Done: it carries the theme everywhere. For Teams, add the meeting background under Video effects › More video effects › Add new.</li>
   </ol>
   <p id="msg" role="status"></p>
 </section>
