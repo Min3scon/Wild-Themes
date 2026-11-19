@@ -184,13 +184,36 @@
     }
     const sz = kid(presDoc.documentElement, NS.p, "sldSz");
     const cx = parseInt(sz && sz.getAttribute("cx"), 10) || 12192000, cy = parseInt(sz && sz.getAttribute("cy"), 10) || 6858000;
-    return { pres, masters, layouts, slides, themes: [...themes], section: { pageW: Math.round(cx / TWIP_EMU), pageH: Math.round(cy / TWIP_EMU) } };
+    const section = { pageW: Math.round(cx / TWIP_EMU), pageH: Math.round(cy / TWIP_EMU) };
+    // where the text placeholders sit (master + layouts), so the reading panel can cover them
+    let box = null;
+    for (const part of [...masters, ...layouts]) {
+      const doc = await pkg.xml(part);
+      if (!doc) continue;
+      for (const sp of all(doc, NS.p, "sp")) {
+        const ph = all(sp, NS.p, "ph")[0];
+        if (!ph || ["dt", "ftr", "sldNum"].includes(ph.getAttribute("type"))) continue;
+        const spPr = kid(sp, NS.p, "spPr"), xf = spPr && kid(spPr, NS.a, "xfrm");
+        const off = xf && kid(xf, NS.a, "off"), ext = xf && kid(xf, NS.a, "ext");
+        if (!off || !ext) continue;
+        const r = { x: +off.getAttribute("x"), y: +off.getAttribute("y"), r: +off.getAttribute("x") + +ext.getAttribute("cx"), b: +off.getAttribute("y") + +ext.getAttribute("cy") };
+        if (![r.x, r.y, r.r, r.b].every(Number.isFinite)) continue;
+        box = box ? { x: Math.min(box.x, r.x), y: Math.min(box.y, r.y), r: Math.max(box.r, r.r), b: Math.max(box.b, r.b) } : r;
+      }
+    }
+    if (box) section.content = { x: Math.round(box.x / TWIP_EMU), y: Math.round(box.y / TWIP_EMU), w: Math.round((box.r - box.x) / TWIP_EMU), h: Math.round((box.b - box.y) / TWIP_EMU) };
+    return { pres, masters, layouts, slides, themes: [...themes], section };
   }
 
-  // Reading panel: most of the slide, about 4% in from the sides and 7% from top and bottom.
+  // Reading panel: most of the slide (about 4% in from the sides, 7% from top and bottom), grown
+  // to cover the layouts' text placeholders, always leaving at least a 1.5% border of backdrop.
   function panelRect(section) {
-    const x = Math.round(section.pageW * 0.04), y = Math.round(section.pageH * 0.07);
-    return { x, y, w: section.pageW - 2 * x, h: section.pageH - 2 * y };
+    const W = section.pageW, H = section.pageH, pad = 173;            // 0.12 in around the text
+    let x = W * 0.04, y = H * 0.07, r = W - x, b = H - y;
+    const c = section.content;
+    if (c) { x = Math.min(x, c.x - pad); y = Math.min(y, c.y - pad); r = Math.max(r, c.x + c.w + pad); b = Math.max(b, c.y + c.h + pad); }
+    x = Math.max(x, W * 0.015); y = Math.max(y, H * 0.015); r = Math.min(r, W * 0.985); b = Math.min(b, H * 0.985);
+    return { x: Math.round(x), y: Math.round(y), w: Math.round(r - x), h: Math.round(b - y) };
   }
 
   // ------------------------------------------------------------------ theme colours and fonts
