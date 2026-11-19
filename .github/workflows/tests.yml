@@ -1,0 +1,31 @@
+name: Document pipeline tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install LibreOffice and poppler (used to re-save and render files as another editor would)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libreoffice-writer libreoffice-impress libreoffice-calc poppler-utils
+      - name: Install Python packages (render sampling, openpyxl checks)
+        run: pip install openpyxl Pillow
+      - name: Install test packages
+        working-directory: tests
+        run: npm ci || npm install
+      - name: Install Playwright Chromium (drives the add-in task pane)
+        working-directory: tests
+        run: npm install --no-save playwright && npx playwright install --with-deps chromium
+      - name: Run tests
+        working-directory: tests
+        run: npm test

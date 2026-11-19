@@ -4,18 +4,56 @@
 <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script></head>
 <body>
 <header><b class="logo" aria-hidden="true"></b><h1>Wild Themes</h1></header>
-<p class="lede" id="lede">Pick a theme. It's saved into this file, so everyone who opens it sees it, on the desktop apps and the web.</p>
-<p id="now" class="now"></p>
-<div class="seg" role="radiogroup" aria-label="Show"><button data-f="all" role="radio">All</button><button data-f="dark" role="radio">Dark</button><button data-f="light" role="radio">Light</button></div>
-<main id="grid" role="radiogroup" aria-label="Theme"></main>
-<p class="note" id="note">Applying a theme rebuilds the file with the same content. Comments and tracked changes may not carry over, so save a copy first if you need them. You can undo with version history.</p>
+
+<section class="file" aria-live="polite">
+  <div class="fhead"><span class="sw" id="sw" aria-hidden="true"></span>
+    <div class="ftext"><b id="fname">Checking this file…</b><span id="fsub"></span></div>
+    <span class="badge" id="badge" hidden></span></div>
+  <ul id="problems" class="problems" hidden></ul>
+  <div class="row">
+    <button id="verify" class="btn ghost">Check again</button>
+    <button id="repair" class="btn" hidden>Restore theme</button>
+    <button id="undo" class="btn" hidden>Put it back</button>
+    <button id="remove" class="btn ghost" hidden>Remove theme</button>
+  </div>
+</section>
+
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" id="t-themes" aria-controls="p-themes" aria-selected="true">Themes</button>
+  <button role="tab" id="t-look" aria-controls="p-look" aria-selected="false">Look &amp; effects</button>
+  <button role="tab" id="t-about" aria-controls="p-about" aria-selected="false">About</button>
+</nav>
+
+<section id="p-themes" role="tabpanel" aria-labelledby="t-themes">
+  <div class="seg" role="radiogroup" aria-label="Show">
+    <button data-f="all" role="radio">All</button><button data-f="dark" role="radio">Dark</button><button data-f="light" role="radio">Light</button><button data-f="mine" role="radio">Mine</button>
+  </div>
+  <main id="grid" role="radiogroup" aria-label="Theme"></main>
+  <p class="row"><label class="btn ghost file-in">Import a .wildtheme<input id="import" type="file" accept=".wildtheme,application/json" hidden></label></p>
+</section>
+
+<section id="p-look" role="tabpanel" aria-labelledby="t-look" hidden>
+  <form id="look" class="look"></form>
+  <div class="row"><button id="applyLook" class="btn" disabled>Apply changes</button><button id="resetLook" class="btn ghost">Defaults</button></div>
+  <label class="switch auto"><input type="checkbox" id="auto"><span>Open Wild Themes by itself when a file has a theme</span></label>
+</section>
+
+<section id="p-about" role="tabpanel" aria-labelledby="t-about" hidden>
+  <p>The theme is written into the file itself: colours, fonts, text and table styles, the scene picture, and a description of the theme with a check that it's intact. Anyone can open the file anywhere (Word, PowerPoint, Excel, the web, Teams, phones) without installing anything.</p>
+  <p id="hostnote"></p>
+  <p class="note">Files are never changed silently. After every change this pane reads the file back and shows exactly what's in it.</p>
+</section>
+
 <p id="msg" role="status"></p>
-<button id="remove" class="remove" hidden>Remove theme from this file</button>
+<p class="alt" id="altrow" hidden><button id="copy" class="link">Open a themed copy in a new window instead</button></p>
+
 <script src="../extension/vendor/jszip.min.js"></script>
 <script src="../extension/lib/themes.js"></script>
 <script src="../extension/lib/stamper.js"></script>
 <script src="../extension/lib/stamper-pptx.js"></script>
 <script src="../extension/lib/stamper-xlsx.js"></script>
 <script src="../extension/lib/assets.js"></script>
+<script src="../extension/lib/wtcore.js"></script>
+<script src="../extension/lib/wtui.js"></script>
 <script src="taskpane.js"></script>
 </body></html>

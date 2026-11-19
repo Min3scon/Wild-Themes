@@ -129,3 +129,26 @@ code{font:13px var(--mono);color:var(--fg)}
   .group{flex-wrap:wrap}dialog{padding:22px}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* File studio */
+.studio main{padding-top:48px}.st-drop{padding:44px 20px}
+.st-file{margin:24px 0;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px}
+.st-head{display:flex;align-items:center;gap:14px}.st-sw{flex:none;width:44px;height:44px;border-radius:10px;background:var(--muted)}
+.st-text{flex:1;min-width:0;display:flex;flex-direction:column}.st-text b{font-weight:600;font-size:1.1rem}.st-text span,.st-text small{color:var(--mfg);font-size:14px}
+.st-text small{font-family:var(--mono);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st-badge{flex:none;font-size:12px;font-weight:600;padding:3px 10px;border-radius:99px;border:1px solid currentColor}
+.st-badge.intact{color:#7ee2b8}.st-badge.modified,.st-badge.legacy,.st-badge.unverified{color:#ffd27a}.st-badge.partial,.st-badge.damaged{color:#ff8f8f}
+.st-problems{margin:12px 0 0;padding-left:20px;color:var(--mfg);font-size:14px}
+.st-file .row{margin-top:14px}.st-file .msg{margin:12px 0 0}
+.st-cols{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:32px}
+@media (max-width:860px){.st-cols{grid-template-columns:1fr}}
+.st-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:16px}
+.st-card{all:unset;cursor:pointer;border-radius:10px;overflow:hidden;background:var(--card);border:1px solid var(--border);transition:border-color .15s}
+.st-card img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;background:var(--muted)}
+.st-card span{display:block;padding:7px 10px;font-size:14px;font-weight:500}
+.st-card:hover{border-color:var(--border-hi)}.st-card[aria-checked=true]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.st-card.want{box-shadow:0 0 0 2px var(--primary)}.st-card[aria-busy=true]{opacity:.5}.st-card:focus-visible{outline:2px solid var(--accent)}
+.look{display:flex;flex-direction:column;gap:12px;margin-top:16px}.look h2{font:600 12px/1 var(--sans);text-transform:uppercase;letter-spacing:.08em;color:var(--mfg);margin:8px 0 0}
+.look .switch{display:flex;gap:10px;align-items:flex-start;cursor:pointer}.look .switch input{margin-top:4px;accent-color:var(--accent)}
+.look small{display:block;color:var(--mfg);font-size:13px}.look .field{display:flex;flex-direction:column;gap:4px}
+.look input[type=range]{accent-color:var(--accent)}.look select{background:var(--card);color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:6px;font:inherit}

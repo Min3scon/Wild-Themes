@@ -1,18 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Wild Themes for Word: Office add-in manifest.
-     Replace every https://min3scon.github.io/Wild-Themes/addin/ below with the address where you host this folder
-     (for example https://yourname.github.io/wild-themes-addin/). -->
+<!-- Wild Themes: Office add-in manifest (Word, PowerPoint, Excel; desktop, web, Mac). -->
 <OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
            xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
            xsi:type="TaskPaneApp">
   <Id>6f1d2c9a-8b7e-4c51-9a3d-2e7f5b1c0a4d</Id>
-  <Version>2.0.0.0</Version>
+  <Version>3.0.0.0</Version>
   <ProviderName>Wild Themes</ProviderName>
   <DefaultLocale>en-GB</DefaultLocale>
   <DisplayName DefaultValue="Wild Themes"/>
-  <Description DefaultValue="Save a theme into your Word document or PowerPoint deck: backdrop, colours and fonts that everyone who opens it will see."/>
+  <Description DefaultValue="Apply, change, check and remove themes saved inside Word documents, PowerPoint decks and Excel workbooks: scene, colours, fonts and styles that everyone who opens the file sees."/>
   <IconUrl DefaultValue="https://min3scon.github.io/Wild-Themes/addin/assets/icon-32.png"/>
   <HighResolutionIconUrl DefaultValue="https://min3scon.github.io/Wild-Themes/addin/assets/icon-80.png"/>
   <SupportUrl DefaultValue="https://min3scon.github.io/Wild-Themes/addin/"/>
@@ -24,11 +22,7 @@
     <Hosts>
       <Host xsi:type="Document">
         <DesktopFormFactor>
-          <GetStarted>
-            <Title resid="GetStarted.Title"/>
-            <Description resid="GetStarted.Description"/>
-            <LearnMoreUrl resid="Site.Url"/>
-          </GetStarted>
+          <GetStarted><Title resid="GetStarted.Title"/><Description resid="GetStarted.Description"/><LearnMoreUrl resid="Site.Url"/></GetStarted>
           <ExtensionPoint xsi:type="PrimaryCommandSurface">
             <OfficeTab id="TabHome">
               <Group id="WildThemes.Group">
@@ -47,11 +41,7 @@
       </Host>
       <Host xsi:type="Presentation">
         <DesktopFormFactor>
-          <GetStarted>
-            <Title resid="GetStarted.Title"/>
-            <Description resid="GetStarted.Description"/>
-            <LearnMoreUrl resid="Site.Url"/>
-          </GetStarted>
+          <GetStarted><Title resid="GetStarted.Title"/><Description resid="GetStarted.Description"/><LearnMoreUrl resid="Site.Url"/></GetStarted>
           <ExtensionPoint xsi:type="PrimaryCommandSurface">
             <OfficeTab id="TabHome">
               <Group id="WildThemes.Group">
@@ -70,11 +60,7 @@
       </Host>
       <Host xsi:type="Workbook">
         <DesktopFormFactor>
-          <GetStarted>
-            <Title resid="GetStarted.Title"/>
-            <Description resid="GetStarted.Description"/>
-            <LearnMoreUrl resid="Site.Url"/>
-          </GetStarted>
+          <GetStarted><Title resid="GetStarted.Title"/><Description resid="GetStarted.Description"/><LearnMoreUrl resid="Site.Url"/></GetStarted>
           <ExtensionPoint xsi:type="PrimaryCommandSurface">
             <OfficeTab id="TabHome">
               <Group id="WildThemes.Group">
@@ -108,9 +94,94 @@
         <bt:String id="Button.Label" DefaultValue="Themes"/>
       </bt:ShortStrings>
       <bt:LongStrings>
-        <bt:String id="GetStarted.Description" DefaultValue="Open Home › Themes and pick a theme. It's saved into the document, so everyone who opens it sees it."/>
-        <bt:String id="Button.Tip" DefaultValue="Pick a theme and save it into this file."/>
+        <bt:String id="GetStarted.Description" DefaultValue="Open Home › Themes to apply, change, check or remove the theme saved in this file."/>
+        <bt:String id="Button.Tip" DefaultValue="Apply, change, check or remove the theme saved in this file."/>
       </bt:LongStrings>
     </Resources>
+    <!-- Office versions with the shared runtime: the pane can start with a themed file and open itself. -->
+    <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides/1.1" xsi:type="VersionOverridesV1_1">
+      <Hosts>
+      <Host xsi:type="Document">
+        <Runtimes><Runtime resid="Taskpane.Url" lifetime="long"/></Runtimes>
+        <DesktopFormFactor>
+          <GetStarted><Title resid="GetStarted.Title"/><Description resid="GetStarted.Description"/><LearnMoreUrl resid="Site.Url"/></GetStarted>
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <OfficeTab id="TabHome">
+              <Group id="WildThemes.Group">
+                <Label resid="Group.Label"/>
+                <Icon><bt:Image size="16" resid="Icon.16"/><bt:Image size="32" resid="Icon.32"/><bt:Image size="80" resid="Icon.80"/></Icon>
+                <Control xsi:type="Button" id="WildThemes.Open">
+                  <Label resid="Button.Label"/>
+                  <Supertip><Title resid="Button.Label"/><Description resid="Button.Tip"/></Supertip>
+                  <Icon><bt:Image size="16" resid="Icon.16"/><bt:Image size="32" resid="Icon.32"/><bt:Image size="80" resid="Icon.80"/></Icon>
+                  <Action xsi:type="ShowTaskpane"><TaskpaneId>WildThemes</TaskpaneId><SourceLocation resid="Taskpane.Url"/></Action>
+                </Control>
+              </Group>
+            </OfficeTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+      <Host xsi:type="Presentation">
+        <Runtimes><Runtime resid="Taskpane.Url" lifetime="long"/></Runtimes>
+        <DesktopFormFactor>
+          <GetStarted><Title resid="GetStarted.Title"/><Description resid="GetStarted.Description"/><LearnMoreUrl resid="Site.Url"/></GetStarted>
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <OfficeTab id="TabHome">
+              <Group id="WildThemes.Group">
+                <Label resid="Group.Label"/>
+                <Icon><bt:Image size="16" resid="Icon.16"/><bt:Image size="32" resid="Icon.32"/><bt:Image size="80" resid="Icon.80"/></Icon>
+                <Control xsi:type="Button" id="WildThemes.Open">
+                  <Label resid="Button.Label"/>
+                  <Supertip><Title resid="Button.Label"/><Description resid="Button.Tip"/></Supertip>
+                  <Icon><bt:Image size="16" resid="Icon.16"/><bt:Image size="32" resid="Icon.32"/><bt:Image size="80" resid="Icon.80"/></Icon>
+                  <Action xsi:type="ShowTaskpane"><TaskpaneId>WildThemes</TaskpaneId><SourceLocation resid="Taskpane.Url"/></Action>
+                </Control>
+              </Group>
+            </OfficeTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+      <Host xsi:type="Workbook">
+        <Runtimes><Runtime resid="Taskpane.Url" lifetime="long"/></Runtimes>
+        <DesktopFormFactor>
+          <GetStarted><Title resid="GetStarted.Title"/><Description resid="GetStarted.Description"/><LearnMoreUrl resid="Site.Url"/></GetStarted>
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <OfficeTab id="TabHome">
+              <Group id="WildThemes.Group">
+                <Label resid="Group.Label"/>
+                <Icon><bt:Image size="16" resid="Icon.16"/><bt:Image size="32" resid="Icon.32"/><bt:Image size="80" resid="Icon.80"/></Icon>
+                <Control xsi:type="Button" id="WildThemes.Open">
+                  <Label resid="Button.Label"/>
+                  <Supertip><Title resid="Button.Label"/><Description resid="Button.Tip"/></Supertip>
+                  <Icon><bt:Image size="16" resid="Icon.16"/><bt:Image size="32" resid="Icon.32"/><bt:Image size="80" resid="Icon.80"/></Icon>
+                  <Action xsi:type="ShowTaskpane"><TaskpaneId>WildThemes</TaskpaneId><SourceLocation resid="Taskpane.Url"/></Action>
+                </Control>
+              </Group>
+            </OfficeTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+      </Hosts>
+    <Resources>
+      <bt:Images>
+        <bt:Image id="Icon.16" DefaultValue="https://min3scon.github.io/Wild-Themes/addin/assets/icon-16.png"/>
+        <bt:Image id="Icon.32" DefaultValue="https://min3scon.github.io/Wild-Themes/addin/assets/icon-32.png"/>
+        <bt:Image id="Icon.80" DefaultValue="https://min3scon.github.io/Wild-Themes/addin/assets/icon-80.png"/>
+      </bt:Images>
+      <bt:Urls>
+        <bt:Url id="Taskpane.Url" DefaultValue="https://min3scon.github.io/Wild-Themes/addin/taskpane.html"/>
+        <bt:Url id="Site.Url" DefaultValue="https://min3scon.github.io/Wild-Themes/addin/"/>
+      </bt:Urls>
+      <bt:ShortStrings>
+        <bt:String id="GetStarted.Title" DefaultValue="Wild Themes is ready"/>
+        <bt:String id="Group.Label" DefaultValue="Wild Themes"/>
+        <bt:String id="Button.Label" DefaultValue="Themes"/>
+      </bt:ShortStrings>
+      <bt:LongStrings>
+        <bt:String id="GetStarted.Description" DefaultValue="Open Home › Themes to apply, change, check or remove the theme saved in this file."/>
+        <bt:String id="Button.Tip" DefaultValue="Apply, change, check or remove the theme saved in this file."/>
+      </bt:LongStrings>
+    </Resources>
+    </VersionOverrides>
   </VersionOverrides>
 </OfficeApp>

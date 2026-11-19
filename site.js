@@ -118,7 +118,7 @@ dlg.addEventListener("click", (e) => { if (e.target === dlg) dlg.close(); });   
 // file tools: ~200 KB the gallery never needs, loaded on first use
 let tools = null;
 const script = (src) => new Promise((ok, no) => document.head.append(Object.assign(document.createElement("script"), { src, onload: ok, onerror: no })));
-const loadTools = () => tools ||= ["vendor/jszip.min.js", "lib/stamper.js", "lib/stamper-pptx.js", "lib/stamper-xlsx.js", "lib/assets.js"]
+const loadTools = () => tools ||= ["vendor/jszip.min.js", "lib/stamper.js", "lib/stamper-pptx.js", "lib/stamper-xlsx.js", "lib/assets.js", "lib/wtcore.js"]
   .reduce((p, f) => p.then(() => script(EXT + f)), Promise.resolve());
 function save(data, name, type) {
   const url = URL.createObjectURL(data instanceof Blob ? data : new Blob([data], { type: type || "application/octet-stream" }));
@@ -138,18 +138,19 @@ async function stillify(a) {                             // Still: first frame a
   c.getContext("2d").drawImage(bmp, 0, 0);
   return { ...a, backdrop: { bytes: new Uint8Array(await (await new Promise((ok) => c.toBlob(ok, "image/png"))).arrayBuffer()), ext: "png" } };
 }
-async function themeFile(t, file, say, remove) {
+// Same core as the extension and the add-in: the file gets the full embedded definition, backup and checks.
+async function themeFile(t, file, say) {
   if (!file) return;
-  if (!/\.(docx|pptx|xlsx)$/i.test(file.name)) return say("Use a .docx, .pptx or .xlsx file.", "bad");
-  say(remove ? "Removing the theme…" : "Adding the theme…");
+  if (!/\.(docx|docm|pptx|pptm|xlsx|xlsm)$/i.test(file.name)) return say("Use a .docx, .pptx or .xlsx file.", "bad");
+  say("Adding the theme…");
   try {
     await loadTools();
-    const kind = WWAssets.kindOf(file.name), S = WWAssets.stamperFor(kind), base = file.name.replace(/\.\w+$/, "");
-    const bytes = new Uint8Array(await file.arrayBuffer());
-    if (remove) { save(await S.unstamp(bytes), `${base} (no theme).${kind}`); return say(`Saved “${base} (no theme).${kind}”.`, "ok"); }
-    const { th, img } = await forFiles(t), info = await S.analyze(bytes);
-    save(await S.stamp(bytes, th, await stillify(await WWAssets.assetsFor(th, kind, info.sections[0], EXT, img))), `${base} (${t.name}).${kind}`);
-    say(`Saved “${base} (${t.name}).${kind}”. The theme is inside it now.`, "ok");
+    const m = /^(.*?)(\.[^.]+)$/.exec(file.name), { th, img } = await forFiles(t);
+    const out = await WTCore.apply(new Uint8Array(await file.arrayBuffer()), th, { animated: motion }, WWAssets.maker(EXT, async () => img), "Wild Themes website");
+    const check = await WTCore.inspect(out);
+    if (check.status !== "intact") throw new Error(check.problems.map((p) => p.text).join(" "));
+    save(out, `${m[1]} (${t.name})${m[2]}`);
+    say(`Saved “${m[1]} (${t.name})${m[2]}”. The theme is inside it and checked.`, "ok");
   } catch (e) { say("That file couldn't be themed: " + e.message, "bad"); }
 }
 function wireDrop(drop, onFile) {
@@ -215,8 +216,8 @@ function openTheme(t) {
   $(".desc", body).textContent = t.blurb;
   $(".stage", body).srcdoc = sceneDoc(t, true);
   wireDrop($(".drop", body), (f) => themeFile(t, f, say));
+  const st = $("[data-studio]", body); if (st && t.kind !== "local") st.href = "studio.html?theme=" + encodeURIComponent(t.id);
   $$("[data-a]", body).forEach((b) => b.onclick = () => {
-    if (b.dataset.a === "remove") { const i = Object.assign(document.createElement("input"), { type: "file", accept: ".docx,.pptx,.xlsx" }); i.onchange = () => themeFile(t, i.files[0], say, true); return i.click(); }
     actions[b.dataset.a](t, say).catch((e) => say(e.message, "bad"));
   });
 }
