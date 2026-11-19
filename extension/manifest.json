@@ -73,6 +73,7 @@
     "https://teams.microsoft.com/*",
     "https://teams.live.com/*",
     "https://teams.cloud.microsoft/*",
-    "https://min3scon.github.io/*"
+    "https://min3scon.github.io/*",
+    "http://127.0.0.1:47615/*"
   ]
 }
