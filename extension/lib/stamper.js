@@ -28,6 +28,8 @@
     pic: "http://schemas.openxmlformats.org/drawingml/2006/picture",
     mc: "http://schemas.openxmlformats.org/markup-compatibility/2006",
     w15: "http://schemas.microsoft.com/office/word/2012/wordml",
+    v: "urn:schemas-microsoft-com:vml",
+    o: "urn:schemas-microsoft-com:office:office",
     xmlns: "http://www.w3.org/2000/xmlns/",
     pr: "http://schemas.openxmlformats.org/package/2006/relationships",
     ct: "http://schemas.openxmlformats.org/package/2006/content-types",
@@ -85,7 +87,7 @@
   }
   // parse a fragment written with prefixes w:, wp:, a:, pic:, r:
   function fragment(doc, xml) {
-    const wrap = `<root xmlns:w="${NS.w}" xmlns:r="${NS.r}" xmlns:wp="${NS.wp}" xmlns:a="${NS.a}" xmlns:pic="${NS.pic}" xmlns:w15="${NS.w15}">${xml}</root>`;
+    const wrap = `<root xmlns:w="${NS.w}" xmlns:r="${NS.r}" xmlns:wp="${NS.wp}" xmlns:a="${NS.a}" xmlns:pic="${NS.pic}" xmlns:w15="${NS.w15}" xmlns:v="${NS.v}" xmlns:o="${NS.o}">${xml}</root>`;
     const f = parseXml(wrap).documentElement;
     const out = [];
     for (let n = f.firstChild; n; n = n.nextSibling) if (n.nodeType === 1) out.push(doc.importNode(n, true));
@@ -524,29 +526,61 @@
   }
 
 
-  // ------------------------------------------------------------------ settings: lock the theme
-  // CT_Settings is an ordered sequence; these are the elements that come before styleLockTheme.
-  const SETTINGS_BEFORE_LOCK = new Set(["writeProtection", "view", "zoom", "removePersonalInformation", "removeDateAndTime",
+  // ------------------------------------------------------------------ settings
+  // CT_Settings is an ordered sequence; this is its order up to defaultTabStop.
+  const SETTINGS_ORDER = ["writeProtection", "view", "zoom", "removePersonalInformation", "removeDateAndTime",
     "doNotDisplayPageBoundaries", "displayBackgroundShape", "printPostScriptOverText", "printFractionalCharacterWidth",
     "printFormsData", "embedTrueTypeFonts", "embedSystemFonts", "saveSubsetFonts", "saveFormsData", "mirrorMargins",
     "alignBordersAndEdges", "bordersDoNotSurroundHeader", "bordersDoNotSurroundFooter", "gutterAtTop", "hideSpellingErrors",
     "hideGrammaticalErrors", "activeWritingStyle", "proofState", "formsDesign", "attachedTemplate", "linkStyles",
     "stylePaneFormatFilter", "stylePaneSortMethod", "documentType", "mailMerge", "revisionView", "trackRevisions",
-    "doNotTrackMoves", "doNotTrackFormatting", "documentProtection", "autoFormatOverride"]);
-  function lockTheme(doc) {
+    "doNotTrackMoves", "doNotTrackFormatting", "documentProtection", "autoFormatOverride", "styleLockTheme", "styleLockQFSet"];
+  // Add an empty on/off setting (<w:name/>) in its schema position, or switch an existing one on.
+  function ensureSetting(doc, name) {
     const root = doc.documentElement;
-    for (const name of ["styleLockTheme", "styleLockQFSet"]) {
-      const ex = kid(root, NS.w, name);
-      if (ex) { ex.removeAttributeNS(NS.w, "val"); ex.removeAttribute("w:val"); continue; }
-      let before = null;
-      for (let n = root.firstChild; n; n = n.nextSibling) {
-        if (n.nodeType !== 1) continue;
-        const ln = n.namespaceURI === NS.w ? n.localName : null;
-        if (ln && (SETTINGS_BEFORE_LOCK.has(ln) || (name === "styleLockQFSet" && ln === "styleLockTheme"))) continue;
-        before = n; break;
-      }
-      root.insertBefore(fragment(doc, `<w:${name}/>`)[0], before);
+    const ex = kid(root, NS.w, name);
+    if (ex) { ex.removeAttributeNS(NS.w, "val"); ex.removeAttribute("w:val"); return; }
+    const earlier = new Set(SETTINGS_ORDER.slice(0, SETTINGS_ORDER.indexOf(name)));
+    let before = null;
+    for (let n = root.firstChild; n; n = n.nextSibling) {
+      if (n.nodeType !== 1) continue;
+      if (n.namespaceURI === NS.w && earlier.has(n.localName)) continue;
+      before = n; break;
     }
+    root.insertBefore(fragment(doc, `<w:${name}/>`)[0], before);
+  }
+  function removeSetting(doc, name) {
+    let n = 0;
+    for (const el of kids(doc.documentElement, NS.w, name)) { doc.documentElement.removeChild(el); n++; }
+    return n;
+  }
+  // Theme + style-set locks, and show the page background picture.
+  function lockTheme(doc) { for (const name of ["styleLockTheme", "styleLockQFSet"]) ensureSetting(doc, name); }
+
+  // ------------------------------------------------------------------ page background
+  // Declare a namespace prefix on a part's root.
+  function ensureNs(doc, prefix, uri) {
+    const root = doc.documentElement;
+    if (!root.getAttribute("xmlns:" + prefix)) root.setAttributeNS(NS.xmlns, "xmlns:" + prefix, uri);
+  }
+  // Relationship ids used anywhere inside an element (r:id, r:embed, ...).
+  function relIdsIn(el) {
+    const ids = [];
+    for (const n of [el, ...Array.from(el.getElementsByTagNameNS("*", "*"))]) {
+      for (const a of Array.from(n.attributes || [])) if (a.namespaceURI === NS.r && a.value) ids.push(a.value);
+    }
+    return ids;
+  }
+  const backgroundOf = (doc) => kid(doc.documentElement, NS.w, "background");
+  // Ours if its picture fill is titled "Wild Theme" or points at one of our media files.
+  function isOurBackground(bg, rels) {
+    if (!bg) return false;
+    for (const f of all(bg, NS.v, "fill")) if ((f.getAttributeNS(NS.o, "title") || f.getAttribute("o:title")) === "Wild Theme") return true;
+    return relIdsIn(bg).some((id) => { const r = rels.byId(id); return !!r && isOurMedia(r.target); });
+  }
+  function pageBackgroundXml(rId) {
+    return `<w:background w:color="FFFFFF"><v:background id="_x0000_s1025" o:bwmode="white" o:targetscreensize="1024,768">` +
+      `<v:fill r:id="${rId}" o:title="Wild Theme" recolor="t" type="frame"/></v:background></w:background>`;
   }
 
   // ------------------------------------------------------------------ custom properties
@@ -600,14 +634,25 @@
     for (const name of Object.keys(pkg.zip.files)) if (/^word\/media\/wildtheme-/.test(name) && !stillUsed.has(name)) pkg.remove(name);
   }
   const isOurMedia = (target) => /(^|\/)media\/wildtheme-/.test(target);
-  // Remove our pictures (and their relationships) from the main part and every header part.
-  async function cleanParts(pkg, main, mainRels) {
+  // Remove our pictures (and their relationships) from the main part and every header part,
+  // plus our page background. { anyBackground: true } also removes someone else's page background
+  // (stamping replaces it). Returns whether a page background was removed.
+  async function cleanParts(pkg, main, mainRels, { anyBackground = false } = {}) {
     const freedMedia = new Set();
+    let removedBackground = false;
     for (const part of [main, ...mainRels.byType(REL.header).map((r) => resolveTarget(main, r.target))]) {
       const pd = await pkg.xml(part);
       if (!pd) continue;
       const freed = removeOurs(pd);
-      if (part === main) removeTagLines(pd);
+      if (part === main) {
+        removeTagLines(pd);
+        const bg = backgroundOf(pd);
+        if (bg && (anyBackground || isOurBackground(bg, mainRels))) {
+          freed.push(...relIdsIn(bg));
+          pd.documentElement.removeChild(bg);
+          removedBackground = true;
+        }
+      }
       pkg.touch(part);
       const rels = await pkg.rels(part);
       for (const r of rels.list()) {
@@ -616,6 +661,7 @@
       }
     }
     await pruneMedia(pkg, freedMedia);
+    return removedBackground;
   }
 
   // ------------------------------------------------------------------ public: analyze
@@ -652,8 +698,8 @@
     const mainRels = await pkg.rels(main);
     const descr = markerDescr(theme);
 
-    // ---- clean up any earlier Wild Theme: drawings, media, tag lines
-    await cleanParts(pkg, main, mainRels);
+    // ---- clean up any earlier Wild Theme: drawings, page background, media, tag lines
+    await cleanParts(pkg, main, mainRels, { anyBackground: true });
 
     // ---- media
     const ext = (assets.backdrop.ext || "png").toLowerCase().replace("jpg", "jpeg");
@@ -720,13 +766,20 @@
       ct.ensureOverride(settingsPath, "application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml");
     }
     const settingsDoc = await pkg.xml(settingsPath);
-    if (settingsDoc) { lockTheme(settingsDoc); pkg.touch(settingsPath); }
+    if (settingsDoc) { lockTheme(settingsDoc); ensureSetting(settingsDoc, "displayBackgroundShape"); pkg.touch(settingsPath); }
 
     // ---- which header types are in play; page geometry per section
     const evenOdd = await evenOddOf(pkg, main, mainRels);
     const infos = await sectionInfos(pkg, main, doc, mainRels, evenOdd);
 
-    // ---- headers with backdrop + panel, section by section
+    // ---- the scene on every page: the document's page background (full colour, never dimmed;
+    //      Word shows the first frame of a GIF here)
+    const bgRid = mainRels.add(REL.image, relativeTarget(main, media.backdrop));
+    ensureNs(doc, "v", NS.v); ensureNs(doc, "o", NS.o);
+    doc.documentElement.insertBefore(fragment(doc, pageBackgroundXml(bgRid))[0], doc.documentElement.firstChild);
+
+    // ---- headers: the light panel, section by section (Word dims header content while you
+    //      edit the body, which is fine for a pale panel but would wash out the scene)
     const headerDocs = [];
     for (const r of mainRels.byType(REL.header)) { const d = await pkg.xml(resolveTarget(main, r.target)); if (d) headerDocs.push(d); }
     let nextId = maxDocPrId([doc, ...headerDocs]) + 1;
@@ -739,31 +792,23 @@
       while (pkg.has(`word/header${n}.xml`)) n++;
       return `word/header${n}.xml`;
     };
-    const runFor = (geom, rIds) => {
+    // One picture per run: Word only draws the first <w:drawing> in a run.
+    const pictureRun = (anchor) => `<w:r w:rsidR="${OUR_RSID}"><w:rPr><w:noProof/></w:rPr><w:drawing>${anchor}</w:drawing></w:r>`;
+    const panelAnchor = (geom, rId, z) => {
       const pr = panelRect(geom);
-      const W = geom.pageW * TWIP_EMU, H = geom.pageH * TWIP_EMU;
-      let xml = `<w:r w:rsidR="${OUR_RSID}"><w:rPr><w:noProof/></w:rPr><w:drawing>` +
-        anchorXml({ id: nextId, name: "WildThemeBackdrop", descr, title: "Wild Theme", rId: rIds.backdrop, x: 0, y: 0, cx: W, cy: H, z: 1 }) + "</w:drawing>";
-      nextId++;
-      if (rIds.panel) {
-        xml += `<w:drawing>` + anchorXml({ id: nextId, name: "WildThemePanel", descr: "Decorative page panel (Wild Theme)", title: "",
-          rId: rIds.panel, x: pr.x * TWIP_EMU, y: pr.y * TWIP_EMU, cx: pr.w * TWIP_EMU, cy: pr.h * TWIP_EMU, z: 2 }) + "</w:drawing>";
-        nextId++;
-      }
-      return lockedSdt("WildTheme", nextSdtId(), xml + "</w:r>", HIDE_SDT);
+      return anchorXml({ id: nextId++, name: "WildThemePanel", descr: "Decorative page panel (Wild Theme)", title: "",
+        rId, x: pr.x * TWIP_EMU, y: pr.y * TWIP_EMU, cx: pr.w * TWIP_EMU, cy: pr.h * TWIP_EMU, z });
     };
     async function stampHeader(path, geom) {
+      stampedGeom.set(path, geom);
+      const pPath = await panelPath(geom);
+      if (!pPath) return;
       const hd = await pkg.xml(path);
       const rels = await pkg.rels(path);
-      const pPath = await panelPath(geom);
-      const rIds = {
-        backdrop: rels.add(REL.image, relativeTarget(path, media.backdrop)),
-        panel: pPath ? rels.add(REL.image, relativeTarget(path, pPath)) : null,
-      };
+      const rId = rels.add(REL.image, relativeTarget(path, pPath));
       if (HIDE_SDT) ensureW15(hd);
-      insertLeadRun(hd, hd.documentElement, runFor(geom, rIds));
+      insertLeadRun(hd, hd.documentElement, lockedSdt("WildTheme", nextSdtId(), pictureRun(panelAnchor(geom, rId, 2)), HIDE_SDT));
       pkg.touch(path);
-      stampedGeom.set(path, geom);
       headerCount++;
     }
     async function newHeader(sourcePath) {
@@ -803,7 +848,8 @@
       body.appendChild(s);
       secEls.push(s);
     }
-    for (let si = 0; si < secEls.length; si++) {
+    const havePanel = !!(panelFn || (assets.panel && assets.panel.bytes));
+    for (let si = 0; si < (havePanel ? secEls.length : 0); si++) {
       const sectPr = secEls[si];
       const geom = infos[si] || sectionGeometry(sectPr);
       const types = ["default"];
@@ -841,16 +887,22 @@
     }
     pkg.touch(main);
 
-    // ---- body marker the extension can find in Word for the web
+    // ---- page 1, in the body's first paragraph (locked): the marker the extension finds in
+    //      Word for the web, the animated backdrop (body pictures aren't dimmed) and its panel.
+    //      Body behind-text pictures sit above the header layer, so page 1 needs its own panel.
     const body = all(doc, NS.w, "body")[0];
+    const first = infos[0] || sectionGeometry(secEls[0]);
     const markerRid = mainRels.add(REL.image, relativeTarget(main, media.marker));
+    const page1Panel = await panelPath(first);
+    let page1 = pictureRun(anchorXml({ id: nextId++, name: "WildThemeMarker", descr, title: "Wild Theme", rId: markerRid, x: 0, y: 0, cx: 9525, cy: 9525, z: 3 })) +
+      pictureRun(anchorXml({ id: nextId++, name: "WildThemeBackdrop", descr, title: "Wild Theme", rId: bgRid, x: 0, y: 0,
+        cx: first.pageW * TWIP_EMU, cy: first.pageH * TWIP_EMU, z: 1 }));
+    if (page1Panel) page1 += pictureRun(panelAnchor(first, mainRels.add(REL.image, relativeTarget(main, page1Panel)), 2));
     if (HIDE_SDT) ensureW15(doc);
-    insertLeadRun(doc, body, lockedSdt("WildThemeMarker", nextSdtId(), `<w:r w:rsidR="${OUR_RSID}"><w:rPr><w:noProof/></w:rPr><w:drawing>` +
-      anchorXml({ id: nextId++, name: "WildThemeMarker", descr, title: "Wild Theme", rId: markerRid, x: 0, y: 0, cx: 9525, cy: 9525, z: 3 }) +
-      `</w:drawing></w:r>`, HIDE_SDT));
+    insertLeadRun(doc, body, lockedSdt("WildThemeMarker", nextSdtId(), page1, HIDE_SDT));
 
     // ---- metadata
-    await setCustomProps(pkg, { WildTheme: theme.id, WildThemeName: theme.name || theme.id, WildThemeVersion: "2" });
+    await setCustomProps(pkg, { WildTheme: theme.id, WildThemeName: theme.name || theme.id, WildThemeVersion: "3" });
 
     const out = await pkg.save();
     out.stats = { sections: secEls.length, headersStamped: headerCount };
@@ -866,7 +918,7 @@
     const main = await pkg.mainPart();
     const doc = await pkg.xml(main);
     const mainRels = await pkg.rels(main);
-    await cleanParts(pkg, main, mainRels);
+    const removedBackground = await cleanParts(pkg, main, mainRels);
 
     // header parts that only ever held our picture: drop them and their references
     for (const r of mainRels.byType(REL.header)) {
@@ -919,7 +971,9 @@
       const sp = resolveTarget(main, sRel.target);
       const sd = await pkg.xml(sp);
       if (sd) {
-        for (const name of ["styleLockTheme", "styleLockQFSet"]) for (const el of kids(sd.documentElement, NS.w, name)) sd.documentElement.removeChild(el);
+        removeSetting(sd, "styleLockTheme");
+        removeSetting(sd, "styleLockQFSet");
+        if (removedBackground && !backgroundOf(doc)) removeSetting(sd, "displayBackgroundShape");
         pkg.touch(sp);
       }
     }

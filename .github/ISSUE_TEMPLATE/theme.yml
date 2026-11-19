@@ -1,0 +1,84 @@
+name: Submit a theme
+description: Share a theme for the Wild Themes gallery. A maintainer reviews it before it goes live.
+title: "Theme: "
+labels: [theme-submission]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing a theme! Pick **Picture** for a still image, or **Colours** for an animated colour theme.
+        A maintainer checks every theme before it appears on the site.
+  - type: input
+    id: name
+    attributes:
+      label: Theme name
+      description: Max 30 characters. Letters, numbers, spaces and - ' & . ! only.
+      placeholder: Midnight Arcade
+    validations:
+      required: true
+  - type: input
+    id: author
+    attributes:
+      label: Your name
+      description: Shown on the site. Leave blank to use your GitHub name.
+    validations:
+      required: false
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Dark or light
+      options:
+        - Dark
+        - Light
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Type
+      options:
+        - Picture (still)
+        - Colours (animated)
+    validations:
+      required: true
+  - type: input
+    id: colours
+    attributes:
+      label: Colours
+      description: "Needed for Colours. 3 hex colours: background, glow 1, glow 2."
+      placeholder: "#120a2a #ff2bd6 #21e6ff"
+    validations:
+      required: false
+  - type: dropdown
+    id: effect
+    attributes:
+      label: Effect
+      options:
+        - None
+        - Twinkling stars
+        - Snow
+        - Bubbles
+        - Confetti
+    validations:
+      required: false
+  - type: input
+    id: accent
+    attributes:
+      label: Accent colour
+      description: Optional hex colour for glows and sparks, e.g. #ff2bd6.
+    validations:
+      required: false
+  - type: textarea
+    id: picture
+    attributes:
+      label: Picture
+      description: Needed for Picture. Drag your picture here (PNG, JPG or WebP, at least 1280×720, at most 2 MB).
+    validations:
+      required: false
+  - type: checkboxes
+    id: rights
+    attributes:
+      label: Rights
+      options:
+        - label: I made this picture or have the right to share it
+          required: true
