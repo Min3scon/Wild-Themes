@@ -1,26 +1,13 @@
-# Wild Themes add-in for Word, PowerPoint and Excel (desktop and web)
+# Wild Themes add-in for Word, PowerPoint and Excel
 
-Adds a **Themes** button to the Home tab in Word, PowerPoint and Excel. In Word and PowerPoint, pick a theme and it's saved into the open file itself: backdrop, colours, fonts, locked theme pictures and hidden file properties. Anyone who opens the document sees the theme, with nothing installed. Removing it is done with the same add-in (**Remove theme from this document**).
+Adds **Home › Themes** to Word, PowerPoint and Excel on Windows, Mac and the web. The pane:
 
-Works in Microsoft 365 on Windows and Mac, and on the web (Word needs Word API 1.5; PowerPoint needs PowerPoint API 1.2). Excel doesn't let add-ins swap a whole workbook, so in Excel the button points you to the browser extension's “Save theme into a file”, which handles .xlsx.
+- recognises the theme saved in the open file (anyone's file: the theme's description travels inside it) and checks it's intact;
+- applies, changes, tunes (look and effects), restores or removes it, then reads the file back and shows exactly what's in it;
+- lists every theme on the website, including approved community themes, without updating the add-in.
 
-## 1. Put the add-in online (one time, free)
+It runs the same code as the website's File studio and the browser extension (`../extension/lib/wtcore.js`), served from the website, so it updates itself.
 
-Word only loads add-ins from an HTTPS web address. GitHub Pages is free:
+Install: see the main README ("Office add-in"). Requirements: Word API 1.5 (in-place) or 1.3 (copy), PowerPoint API 1.2 (in-place) or 1.1 (copy), Excel API 1.8 (copy). Custom XML sync needs Word API 1.4 / PowerPoint API 1.7. Opening by itself needs the shared runtime (SharedRuntime 1.1).
 
-1. Create a GitHub repository called `wild-themes-addin` and upload everything in this folder.
-2. In the repository: **Settings › Pages › Deploy from a branch › main / (root)**. After a minute it's live at `https://YOUR-NAME.github.io/wild-themes-addin/`.
-3. Open `manifest.xml`, replace every `https://YOUR-SITE` with `https://YOUR-NAME.github.io/wild-themes-addin`, and upload the changed file.
-
-## 2. Add it to Word
-
-- **On the web (Word, PowerPoint, Excel):** Home › Add-ins › More Add-ins › My Add-ins › **Upload My Add-in** › choose `manifest.xml`. (It's remembered in that browser.)
-- **Mac:** copy `manifest.xml` into `~/Library/Containers/com.microsoft.Word/Data/Documents/wef` (and the same under `com.microsoft.Powerpoint` / `com.microsoft.Excel`; create `wef` if needed), restart the app, then Home › Add-ins.
-- **Windows:** put `manifest.xml` in a shared folder, add that folder under File › Options › Trust Center › Trust Center Settings › Trusted Add-in Catalogs (tick "Show in Menu"), restart the app, then Insert › My Add-ins › Shared Folder.
-
-## Good to know
-
-- In PowerPoint, applying a theme re-adds your slides with the themed master and removes the old copies; speaker notes come along. In Word, it rebuilds the document with the same text, pictures and formatting. Comments and tracked changes may not carry over, so save a copy first if you need them; Word's version history can undo it.
-- Word swaps documents in place only up to about 4 MB. For bigger files, use the browser extension's "Save theme into a Word file".
-- The backdrop animates in the Word desktop app. Word for the web shows it as a still picture.
-- After changing anything in `../wild-themes-for-word`, run `./build.sh` to copy the shared files across.
+Word swaps documents in place up to about 4 MB; use "Open a themed copy" (or the File studio) for bigger files. Comments and tracked changes may not survive an in-place swap; the copy keeps everything.

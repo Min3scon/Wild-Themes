@@ -1,28 +1,58 @@
 # Wild Themes
 
-Animated themes for Word, PowerPoint, Excel and Teams, and a way to save a theme **inside** a file so everyone who opens it sees it, with nothing installed.
+Animated themes for Word, PowerPoint, Excel and Teams, saved **inside** your files so everyone who opens them sees the theme, with nothing installed.
 
-**Website:** https://min3scon.github.io/Wild-Themes/ (theme a file right in your browser)
+**Website:** https://min3scon.github.io/Wild-Themes/ · **File studio:** https://min3scon.github.io/Wild-Themes/studio.html
 
 | Folder | What it is |
 |---|---|
-| `/` (`index.html`, `site.*`) | The website: theme gallery, live preview, and "theme a file" (drop a .docx / .pptx / .xlsx, the themed copy downloads straight away) |
-| `extension/` | Browser extension for Word, PowerPoint, Excel and Teams on the web (Chrome, Edge, Brave, Arc). Load this folder unpacked, or use `downloads/wild-themes-extension.zip` |
-| `addin/` | Office add-in for Word and PowerPoint, desktop and web: one click saves a theme into the open file. Upload `addin/manifest.xml` in Office (Home › Add-ins › My Add-ins › Upload My Add-in) |
-| `documents/` | 18 Word documents with a theme already inside |
-| `downloads/` | Zips for the extension and the documents |
+| `/` (`index.html`, `site.*`) | Theme gallery, live previews, "theme a file", make and share your own theme |
+| `studio.html` | File studio: open any Word, PowerPoint or Excel file to see its theme, check it's intact, change it, tune it, restore it or remove it. Runs in the browser; nothing is uploaded |
+| `extension/` | Browser extension: live scenes in Word, PowerPoint, Excel and Teams on the web, plus the file tools. `extension/lib/` is the shared core every tool uses |
+| `addin/` | Office add-in for Word, PowerPoint and Excel (Windows, Mac, web) |
+| `teams/` | Teams app: File studio and the theme gallery as tabs |
+| `catalog.json` | Live theme list (built-in + approved community themes), rebuilt on every deploy. The add-in and the extension read it, so new themes arrive without a new download |
+| `documents/` | One Word document per theme, ready to use |
+| `tests/` | Regression tests (run in CI on every push) |
 
 ## What goes into a themed file
 
-- Theme colours and fonts, and matching title, heading and quote styles
-- A backdrop behind the text on every page or slide, with a reading panel so text stays readable
-- Word: the backdrop sits in locked content controls; PowerPoint: on the slide master, locked
-- Hidden file properties naming the theme (`WildTheme`, `WildThemeName`)
+The theme becomes part of the file's own structure:
 
-The backdrop animates in desktop Word and PowerPoint. Office on the web shows pictures still. Excel gets a pale sheet background (desktop) plus theme colours and fonts.
+| | Word (.docx) | PowerPoint (.pptx) | Excel (.xlsx) |
+|---|---|---|---|
+| Theme part | Colours + fonts (`word/theme/theme1.xml`) | Every used master's theme | `xl/theme/theme1.xml` |
+| Styles | Normal, Title, Subtitle, Heading 1–6, quotes, links, header/footer, caption | Master title/body text styles, bullet colours | Normal font, Title, Heading 1–4, Total, Hyperlink |
+| Tables | Table Grid + "Wild Theme Table" with header row; default for new tables | Default table style follows the accent | Default table style follows the accent |
+| Lists | Bullet and number colours | Bullet colours | — |
+| Existing colours | Text, shading, shapes and charts using the old theme's colours move to the new ones | Shapes and charts likewise | Cells and charts likewise |
+| Scene | Page background + reading panel on every page | Scene + see-through panel on the masters (animated in slide shows) | Pale picture behind every sheet |
+| Effects | Optional heading glow | Optional slide transitions; animated or still scene | Sheet tab colours |
 
-## Performance
+Plus a custom XML part (`urn:wild-themes:document-theme`) holding the theme's full definition, its settings, SHA-256 fingerprints and a backup of the file's original theme and styles. Any copy of the tools can recognise the theme, tell whether it was changed or partly deleted, rebuild it from the file alone, or remove it and put the original look back. Custom properties (`WildTheme`, `WildThemeName`, `WildThemeVersion`) are a second marker that survives editors which drop custom XML.
 
-The extension has no animation loop and no per-frame code. Scenes are CSS gradients painted once; the browser only slides or fades whole layers. Word loads about 9 KB of code plus about 2 KB for the theme in use. Measured cost while typing: about 0.06 ms of script per keystroke with sparks on, none with sparks off.
+Office files aren't tamper-proof: the fingerprints detect accidental changes, they don't prevent edits.
+
+## Office add-in
+
+Install once; the code and the theme list update themselves from the website.
+
+- **Web (Word, PowerPoint, Excel):** Home › Add-ins › More Add-ins › My Add-ins › **Upload My Add-in** › `addin/manifest.xml`.
+- **Windows:** put `manifest.xml` in a shared folder, add it under File › Options › Trust Center › Trust Center Settings › Trusted Add-in Catalogs (tick "Show in Menu"), restart, then Home › Add-ins › Shared Folder.
+- **Mac:** copy `manifest.xml` into `~/Library/Containers/com.microsoft.Word/Data/Documents/wef` (and the same for `com.microsoft.Powerpoint`, `com.microsoft.Excel`), restart.
+
+Then Home › **Themes**. The pane reads the open file, shows its theme and whether it's intact, and lets you apply, change, tune (look and effects), restore or remove it. Word and PowerPoint are changed in place; "Open a themed copy" gives an exact rebuilt file in a new window instead. Excel doesn't let add-ins replace a whole workbook, so the themed workbook opens as a copy to save. Turn on "Open Wild Themes by itself…" to have the pane open when a themed file is opened (Office versions with the shared runtime).
+
+## Teams
+
+Teams previews Office files with Office for the web, so a themed file shows its theme in Teams the way Office for the web draws it; the downloaded file is unchanged and keeps everything. To manage themes inside Teams, upload `downloads/wild-themes-teams.zip` (Apps › Manage your apps › Upload an app, if your organisation allows it). For meetings, every theme has a 1920×1080 background (Video effects › Add new).
+
+## Tests
+
+```bash
+cd tests && npm ci && npm test
+```
+
+Covers apply / re-apply / change / remove / restore for every format, exact restore of the original parts, preservation of content (formulas, validation, names, tables, charts, macros, animations, transitions, links, lists), settings, tamper detection, LibreOffice round trips and renders, the add-in task pane against a stand-in Office, and the extension's live catalogue.
 
 Unofficial. Not made by or affiliated with Microsoft.
