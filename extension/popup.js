@@ -1,12 +1,14 @@
 const T = self.WW_THEMES, $ = (s) => document.querySelector(s);
 const DEF = { on: true, theme: "synthwave", motion: "auto", sparks: true, docs: {} };
-let S = DEF, customs = [], status = null, scope = "all", filter = "all";
+let S = DEF, customs = [], community = [], remote = {}, status = null, scope = "all", filter = "all";
 
 const current = () => (scope === "doc" && status && status.docKey && S.docs[status.docKey]) || S.theme;
-const lookup = (id) => T[id] || customs.find((c) => c.id === id);
+const lookup = (id) => T[id] || remote[id] || customs.find((c) => c.id === id) || community.find((c) => c.id === id);
 const save = (patch) => { Object.assign(S, patch); chrome.storage.sync.set(patch); render(); };
 
-function choose(id) {
+async function choose(id) {
+  const c = community.find((x) => x.id === id);   // community picture: fetched once from the website
+  if (c && c.image) await new Promise((ok) => chrome.runtime.sendMessage({ picture: id }, ok));
   if (scope === "doc" && status && status.docKey) {
     const docs = { ...S.docs, [status.docKey]: id };
     const keys = Object.keys(docs);
@@ -20,6 +22,7 @@ function card(id, name, thumb) {
   b.className = "card"; b.setAttribute("role", "radio"); b.dataset.id = id; b.title = name;
   const img = document.createElement("img");
   img.alt = ""; img.loading = "lazy"; img.src = thumb;
+  img.onerror = () => { const t = lookup(id); img.removeAttribute("src"); if (t) img.style.background = `linear-gradient(135deg,${t.accent},${t.accent2 || t.accent})`; };
   const s = document.createElement("span"); s.textContent = name;
   b.append(img, s);
   b.onclick = () => choose(id);
@@ -37,12 +40,15 @@ function render() {
   $("#scope-doc").setAttribute("aria-checked", scope === "doc");
   $("#scope-all").setAttribute("aria-checked", scope === "all");
   const grid = $("#grid"); grid.textContent = "";
-  const items = filter === "custom" ? [] : Object.entries(T).filter(([, v]) => filter === "all" || v.mode === filter)
-    .map(([id, v]) => card(id, v.name, `previews/${id}.webp`));
+  const items = filter === "custom" || filter === "community" ? [] : Object.entries(T).filter(([, v]) => filter === "all" || v.mode === filter)
+    .map(([id, v]) => card(id, v.name, `previews/${id}.webp`))
+    .concat(Object.entries(remote).filter(([, v]) => filter === "all" || v.mode === filter).map(([id, v]) => card(id, v.name, v.preview)));
+  if (filter === "all" || filter === "community") for (const c of community) items.push(card(c.id, c.name, c.thumb));
   if (filter === "all" || filter === "custom") for (const c of customs) items.push(card(c.id, c.name, c.thumb));
   if (!items.length) {
     const p = document.createElement("p"); p.className = "empty";
-    p.textContent = "No custom themes yet. Click Custom themes to make one from your own picture or colours.";
+    p.textContent = filter === "community" ? "No community themes yet. New ones appear here by themselves once they're approved on the website."
+      : "No custom themes yet. Click Custom themes to make one from your own picture or colours.";
     items.push(p);
   }
   grid.append(...items);
@@ -61,9 +67,14 @@ $("#customs").onclick = () => open("custom");
 
 chrome.storage.sync.get(DEF, (v) => {
   S = { ...DEF, ...v };
-  chrome.storage.local.get("customs", (c) => {
-    customs = c.customs || [];
+  chrome.storage.local.get(["customs", "community", "remote", "catalog"], (c) => {
+    customs = c.customs || []; community = c.community || []; remote = c.remote || {};
     render();
+    // new themes from the website: refresh the list if it's more than an hour old
+    if (!c.catalog || Date.now() - c.catalog.at > 3600e3) chrome.runtime.sendMessage({ sync: 1 }, () => chrome.storage.local.get(["community", "remote"], (n) => {
+      if (chrome.runtime.lastError) return;
+      community = n.community || []; remote = n.remote || {}; render();
+    }));
     // ask the open Word document which file it is and whether the file carries a theme
     chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
       if (!tab) return;

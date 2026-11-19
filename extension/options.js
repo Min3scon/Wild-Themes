@@ -1,5 +1,5 @@
 const T = self.WW_THEMES, $ = (s) => document.querySelector(s);
-let customs = [], docx = null, docName = "", docKind = "docx", kind = "colours", picData = null;
+let customs = [], community = [], remote = {}, docx = null, docName = "", docKind = "docx", kind = "colours", picData = null;
 
 // ---------- tabs
 function tab(name) {
@@ -22,10 +22,12 @@ function fillPick() {
   };
   group("Dark", Object.entries(T).filter(([, t]) => t.mode === "dark").map(([id, t]) => [id, t.name]));
   group("Light", Object.entries(T).filter(([, t]) => t.mode === "light").map(([id, t]) => [id, t.name]));
+  group("New on the website", Object.entries(remote).map(([id, t]) => [id, t.name]));
+  group("Community", community.map((c) => [c.id, c.name]));
   group("Yours", customs.map((c) => [c.id, c.name]));
   if (keep) sel.value = keep;
 }
-const themeFor = (id) => T[id] ? { ...T[id], id } : WWAssets.forCustom({ ...customs.find((c) => c.id === id) });
+const themeFor = (id) => T[id] ? { ...T[id], id } : remote[id] ? { ...remote[id], id } : WWAssets.forCustom({ ...(customs.find((c) => c.id === id) || community.find((c) => c.id === id)) });
 
 // ---------- save a theme into a Word file
 const msg = (t) => { $("#msg").textContent = t; };
@@ -47,7 +49,11 @@ drop.ondragover = (e) => { e.preventDefault(); drop.classList.add("over"); };
 drop.ondragleave = () => drop.classList.remove("over");
 drop.ondrop = (e) => { e.preventDefault(); drop.classList.remove("over"); loadDocx(e.dataTransfer.files[0]); };
 
-const imageOf = async (t) => t.image ? (await chrome.storage.local.get("img:" + t.image))["img:" + t.image] : null;
+const imageOf = async (t) => {
+  if (!t.image) return null;
+  if (t.community) await new Promise((ok) => chrome.runtime.sendMessage({ picture: t.image }, ok));   // fetched once from the website
+  return (await chrome.storage.local.get("img:" + t.image))["img:" + t.image];
+};
 const assetsFor = async (t, sec, k = docKind) => WWAssets.assetsFor(t, k, sec, chrome.runtime.getURL(""), await imageOf(t));
 const maker = WWAssets.maker(chrome.runtime.getURL(""), imageOf);
 let docExt = ".docx";
@@ -183,4 +189,4 @@ $("#imp").onchange = async (e) => {
   } catch (_) { cmsg("That isn't a Wild Themes theme file."); }
 };
 
-chrome.storage.local.get("customs", (c) => { customs = c.customs || []; fillPick(); renderMine(); preview(); });
+chrome.storage.local.get(["customs", "community", "remote"], (c) => { customs = c.customs || []; community = c.community || []; remote = c.remote || {}; fillPick(); renderMine(); preview(); });

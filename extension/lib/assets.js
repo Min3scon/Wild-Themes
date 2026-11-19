@@ -22,7 +22,8 @@
   async function backdrop(t, sec, base, imageB64, kind) {
     if (kind == "xlsx") return washed(t, base, imageB64);
     if (!t.custom) try {
-      const r = await fetch(base + (kind == "pptx" ? "backdrops-wide/" : "backdrops/") + t.id + ".gif");
+      // themes added on the website since this copy was made carry their own picture addresses
+      const r = await fetch((kind == "pptx" ? t.backdropWideUrl : t.backdropUrl) || base + (kind == "pptx" ? "backdrops-wide/" : "backdrops/") + t.id + ".gif");
       if (r.ok) return { bytes: new Uint8Array(await r.arrayBuffer()), ext: "gif" };
     } catch (_) { /* no shipped backdrop: draw one below */ }
     const w = 794, h = Math.round(794 * sec.pageH / sec.pageW), c = cv(w, h), g = c.getContext("2d");
@@ -57,7 +58,7 @@
   // Teams meeting background: 1920x1080 still of the scene.
   async function teams(t, base, imageB64) {
     if (!t.custom) try {
-      const r = await fetch(base + "teams-backgrounds/" + t.id + ".jpg");
+      const r = await fetch(t.teamsUrl || base + "teams-backgrounds/" + t.id + ".jpg");
       if (r.ok) return new Uint8Array(await r.arrayBuffer());
     } catch (_) { /* draw one */ }
     const c = cv(1920, 1080), g = c.getContext("2d");

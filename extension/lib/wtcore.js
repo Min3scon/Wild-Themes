@@ -283,7 +283,10 @@
     const { kind, main } = await kindOf(zip);
     return { zip, kind, main, S: stampers()[kind] };
   }
-  const save = (zip) => zip.generateAsync({ type: "uint8array", compression: "DEFLATE", compressionOptions: { level: 6 }, mimeType: undefined });
+  const save = (zip) => {
+    for (const n of Object.keys(zip.files)) if (zip.files[n].dir) delete zip.files[n];   // zip.file() adds folder entries Office doesn't need
+    return zip.generateAsync({ type: "uint8array", compression: "DEFLATE", compressionOptions: { level: 6 }, mimeType: undefined });
+  };
 
   // What theme does this file carry, and is it intact? Works on any copy, from anyone.
   async function inspect(bytes) {

@@ -13,9 +13,19 @@ const store = {
   set(k, v) { try { localStorage.setItem("wt:" + k, JSON.stringify(v)); } catch (_) { /* private mode */ } },
 };
 const mine = () => store.get("mine", {});
-const makeAssets = A.maker(BASE, async (t) => (mine()[t.id] || {}).image || null);
+// Live theme list from the website: approved community themes appear here without updating anything.
+let community = [];
+const SITE = new URL("../", location.href).href;
+WTCatalog.load(SITE).then((cat) => { community = cat.themes.filter((t) => t.kind === "community").map((t) => WTCatalog.asCustom(t, SITE)); renderGrid(); }).catch(() => {});
+const toDataURL = (blob) => new Promise((ok) => { const r = new FileReader(); r.onload = () => ok(r.result); r.readAsDataURL(blob); });
+async function imageFor(t) {
+  if ((mine()[t.id] || {}).image) return mine()[t.id].image;
+  const c = community.find((x) => x.id === t.id);
+  return c && c.imageUrl ? toDataURL(await (await fetch(c.imageUrl)).blob()) : null;
+}
+const makeAssets = A.maker(BASE, imageFor);
 const say = (t) => { $("#msg").textContent = t || ""; };
-const themeById = (id) => T[id] ? { ...T[id], id } : mine()[id] ? { ...mine()[id].theme, id } : info && info.theme && info.theme.id === id && info.theme.doc ? info.theme : null;
+const themeById = (id) => T[id] ? { ...T[id], id } : mine()[id] ? { ...mine()[id].theme, id } : community.find((c) => c.id === id) ? A.forCustom(community.find((c) => c.id === id)) : info && info.theme && info.theme.id === id && info.theme.doc ? info.theme : null;
 
 // ------------------------------------------------------------------ the open file
 function getFile() {
@@ -152,13 +162,14 @@ function renderGrid() {
   if (filter === "mine") {
     for (const [id, m] of Object.entries(mine())) items.push([id, { ...m.theme, id }, null]);
     if (info && info.theme && info.theme.custom && !mine()[cur]) items.unshift([cur, info.theme, "In this file"]);
-  } else for (const [id, t] of Object.entries(T)) if (filter === "all" || t.mode === filter) items.push([id, t, null]);
-  if (!items.length) { const p = document.createElement("p"); p.className = "empty"; p.textContent = filter === "mine" ? "No custom themes yet. Make one on the website or in the browser extension, export it as a .wildtheme file and import it here." : "No themes."; grid.append(p); }
+  } else if (filter === "community") for (const c of community) items.push([c.id, c, null]);
+  else for (const [id, t] of Object.entries(T)) if (filter === "all" || t.mode === filter) items.push([id, t, null]);
+  if (!items.length) { const p = document.createElement("p"); p.className = "empty"; p.textContent = filter === "community" ? "No community themes yet. Approved ones appear here by themselves." : filter === "mine" ? "No custom themes yet. Make one on the website or in the browser extension, export it as a .wildtheme file and import it here." : "No themes."; grid.append(p); }
   for (const [id, t, tag] of items) {
     const b = document.createElement("button"), s = document.createElement("span");
     b.className = "card"; b.setAttribute("role", "radio"); b.setAttribute("aria-checked", id === cur); b.title = t.blurb || t.name;
     let pic;
-    if (T[id]) { pic = new Image(); pic.src = `${BASE}previews/${id}.webp`; pic.alt = ""; }
+    if (T[id] || t.thumb) { pic = new Image(); pic.src = T[id] ? `${BASE}previews/${id}.webp` : t.thumb; pic.alt = ""; pic.loading = "lazy"; }
     else { pic = document.createElement("i"); pic.style.background = swatch(t); }
     s.textContent = t.name;
     b.append(pic, s);
