@@ -61,11 +61,14 @@ test("report.docx: styles, links, lists, tables and old colours follow the theme
 
   // body font everywhere, text colour from the theme
   const sd = await xml(out, "word/styles.xml");
-  const ddFonts = kid(kid(kid(kid(sd.documentElement, "docDefaults"), "rPrDefault"), "rPr"), "rFonts");
-  assert.equal(wv(ddFonts, "asciiTheme"), "minorHAnsi");
+  const ddRPr = kid(kid(kid(sd.documentElement, "docDefaults"), "rPrDefault"), "rPr");
+  assert.equal(wv(kid(ddRPr, "rFonts"), "asciiTheme"), "minorHAnsi");
+  // body text colour: text1 on the document defaults, which Normal inherits (a colour on Normal itself
+  // would outrank the table header row's white text)
+  assert.equal(wv(kid(ddRPr, "color"), "themeColor"), "text1"); assert.equal(wv(kid(ddRPr, "color")), P.dk1);
   const normal = await style(out, "Normal");
   assert.equal(wv(kid(kid(normal, "rPr"), "rFonts"), "asciiTheme"), "minorHAnsi");
-  assert.equal(wv(colorOf(normal), "themeColor"), "text1"); assert.equal(wv(colorOf(normal)), P.dk1);
+  assert.equal(colorOf(normal), null, "Normal inherits the text colour");
 
   // every themed style uses theme colours (w:themeColor with the matching hex)
   const expect = { Title: ["text2", P.dk2], Subtitle: ["accent1", P.accent1], Heading1: ["accent1", P.accent1], Heading2: ["accent2", P.accent2],

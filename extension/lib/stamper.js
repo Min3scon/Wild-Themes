@@ -661,11 +661,13 @@
       if (!dd) dd = root.insertBefore(fragment(doc, "<w:docDefaults/>")[0], root.firstChild);
       let rd = kid(dd, NS.w, "rPrDefault");
       if (!rd) rd = dd.insertBefore(fragment(doc, "<w:rPrDefault/>")[0], dd.firstChild);
-      setRPr(kid(rd, NS.w, "rPr") || rd.appendChild(fragment(doc, "<w:rPr/>")[0]), MINOR);
+      setRPr(kid(rd, NS.w, "rPr") || rd.appendChild(fragment(doc, "<w:rPr/>")[0]), MINOR + col("text1", P.dk1));
 
-      // Normal: body font, text colour
-      const body = MINOR + col("text1", P.dk1);
-      tweak("paragraph:normal", (id) => `<w:style w:type="paragraph" w:default="1" w:styleId="${esc(id)}"><w:name w:val="Normal"/><w:qFormat/><w:rPr>${body}</w:rPr></w:style>`, body);
+      // Normal: body font; its text colour (text1) comes from the defaults above. A colour on Normal itself
+      // would outrank the table style's header-row colour (white on the accent fill) in Word and LibreOffice.
+      tweak("paragraph:normal", (id) => `<w:style w:type="paragraph" w:default="1" w:styleId="${esc(id)}"><w:name w:val="Normal"/><w:qFormat/><w:rPr>${MINOR}</w:rPr></w:style>`, MINOR);
+      const nrm = byId(plan.slots["paragraph:normal"]), nrPr = nrm && kid(nrm, NS.w, "rPr");
+      if (nrPr) for (const c of kids(nrPr, NS.w, "color")) nrPr.removeChild(c);
 
       // title, subtitle, headings, quotes, caption
       for (const sp of paraSpecs(P, S.glow)) {
