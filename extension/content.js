@@ -119,13 +119,19 @@
   // Excel/Teams: the scene shows only inside the main pane. Everything outside keeps its
   // look because the page behind is painted in the app's own background colour.
   function scanPane() {
-    const root = D.querySelector("[role=main]"), rr = root && root.getBoundingClientRect();
+    // Teams v2 has no role=main; its chat/channel area is app-layout-area--main
+    const root = D.querySelector("[role=main]") || D.querySelector('[data-tid="app-layout-area--main"]'), rr = root && root.getBoundingClientRect();
     if (!rr || rr.width * rr.height < 1e5) return;
     let shell = "";
     for (let a = root.parentElement; a && a != D.body && a != H_; a = a.parentElement) {
       if (a.hasAttribute("data-ww-clear") || solid(a)) { shell = shell || getComputedStyle(a).backgroundColor; ATTR(a, "data-ww-clear", ""); }
     }
-    if (shell && !/, 0\)/.test(shell)) H_.style.setProperty("--ww-base", shell, "important");
+    if (!shell || /, 0\)/.test(shell)) {   // Teams v2: its colour is on body/html, which our own rules clear; read it with them off
+      const was = H_.getAttribute("data-ww"); H_.removeAttribute("data-ww");
+      shell = [D.body, H_].map((n) => getComputedStyle(n).backgroundColor).find((c) => !/, 0\)|^transparent/.test(c)) || "";
+      H_.setAttribute("data-ww", was);
+    }
+    if (shell) H_.style.setProperty("--ww-base", shell, "important");
     // a see-through veil in the pane's own colour keeps text readable that has no card behind it
     const own = getComputedStyle(root).backgroundColor, m = own.match(/\d+(\.\d+)?/g);
     if (m && !root.hasAttribute("data-ww-clear") && solid(root)) bg.style.setProperty("--ww-veil", `rgba(${m[0]},${m[1]},${m[2]},${HN.includes("teams") ? .45 : .8})`);
