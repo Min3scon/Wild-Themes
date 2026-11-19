@@ -234,7 +234,9 @@
   addEventListener("resize", () => later(300), { passive: true });
   addEventListener("scroll", () => later(400), { capture: true, passive: true });
   // Teams and Word swap whole panes without reloading (new chat, channel, tab): look again right away
-  new MutationObserver(() => later(60)).observe(D.documentElement, { childList: true, subtree: true });
+  // throttled to one check per frame (not pushed back while Teams keeps redrawing), so a new pane is themed at once
+  let frame = 0;
+  new MutationObserver(() => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; scan(); }); }).observe(D.documentElement, { childList: true, subtree: true });
   chrome.runtime.onMessage.addListener((m, _, reply) => { m == "ww-status" && reply({ docKey: key, active: id, file }); });
 
   const load = () => chrome.storage.sync.get(DEF, (v) => chrome.storage.local.get(["customs", "community", "remote"], (c) => {
