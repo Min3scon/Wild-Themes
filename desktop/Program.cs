@@ -110,7 +110,8 @@ class Host : ApplicationContext
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Open Teams (themed)", null, (_, _) => AppWindow.Open("teams"));
         menu.Items.Add("Open Word online (themed)", null, (_, _) => AppWindow.Open("word"));
-        menu.Items.Add("Choose a theme (website)", null, (_, _) => AppWindow.Open("site"));
+        // the website in the normal browser: its theme previews, and "Use in extension" switches this app too
+        menu.Items.Add("Choose a theme (website)", null, (_, _) => { try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(Themes.Site) { UseShellExecute = true }); } catch { } });
         menu.Items.Add("Quit", null, (_, _) => Quit());
         // WildThemes.exe --open teams|word|site: straight into a themed window (for shortcuts)
         var args = Environment.GetCommandLineArgs();
