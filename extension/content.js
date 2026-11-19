@@ -198,8 +198,14 @@
     if (!t || !S.sparks || now - last < 90 || e.ctrlKey || e.metaKey || e.altKey || (e.key.length > 1 && e.key != "Enter")) return;
     last = now;
     requestAnimationFrame(() => {
-      const sel = getSelection(), r = sel.rangeCount && sel.getRangeAt(0).getClientRects()[0];
-      const p = r && r.top > 0 ? [r.right, r.top + r.height / 2] : ptr;
+      // Word for the web draws its own text cursor (a thin element), not a real selection; use it
+      // first, then the selection, and the mouse only as a last resort.
+      let p = null;
+      for (const n of D.querySelectorAll('[class*="ursor" i],[class*="aret" i],[id*="ursor" i]')) {
+        const b = n.getBoundingClientRect();
+        if (b.width <= 4 && b.height >= 8 && b.height <= 90 && b.top > 0 && b.left > 0) { p = [b.left + 2, b.top + b.height / 2]; break; }
+      }
+      if (!p) { const sel = getSelection(), r = sel.rangeCount && sel.getRangeAt(0).getClientRects()[0]; p = r && r.top > 0 ? [r.right, r.top + r.height / 2] : ptr; }
       if (!p || !t) return;
       if (!fx) {
         fx = D.createElement("div");

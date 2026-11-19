@@ -7,7 +7,12 @@
 <body><div id="ww-bg"><i></i><i></i><i></i><i></i></div>
 <script>
 const q = new URLSearchParams(location.search), id = q.get("id") || "synthwave", bg = document.getElementById("ww-bg");
-document.getElementById("s").href = "scenes/" + id + ".css";
+// the live scene from the website (new and fixed themes arrive by themselves); the built-in copy offline
+const s = document.getElementById("s"); s.onerror = () => { s.onerror = null; s.href = "scenes/" + id + ".css"; };
+s.href = "https://min3scon.github.io/Wild-Themes/extension/scenes/" + id + ".css";
 bg.dataset.scene = id;
+if (q.get("anim") === "0") bg.classList.add("still");
+// mouse wheel over the scene scrolls Word (the app hides Word's scroll bar so the scene fills that strip)
+addEventListener("wheel", (e) => { const n = Math.round(e.deltaY / 40); if (n && window.chrome && chrome.webview) chrome.webview.postMessage(String(n)); }, { passive: true });
 if (q.get("dark") === "1") { bg.classList.add("veil"); bg.style.setProperty("--ww-veil", "rgba(0,0,0,.42)"); }
 </script></body></html>
