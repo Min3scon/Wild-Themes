@@ -89,7 +89,7 @@ class Host : ApplicationContext
     public Host()
     {
         ui.CreateControl();
-        tray.Icon = SystemIcons.Application;
+        try { tray.Icon = Icon.FromHandle(new Bitmap(Path.Combine(AppContext.BaseDirectory, "ext", "icons", "icon32.png")).GetHicon()); } catch { tray.Icon = SystemIcons.Application; }
         var menu = new ContextMenuStrip();
         var themes = new ToolStripMenuItem("Theme");
         menu.Items.Add(themes);
@@ -102,7 +102,6 @@ class Host : ApplicationContext
         Toggle(menu, "Dark mode", State.Dark, v => { State.Dark = v; Settings.Set("dark", v ? "1" : "0"); Refresh(); });
         Toggle(menu, "Animated", State.Animated, v => { State.Animated = v; Settings.Set("animated", v ? "1" : "0"); Refresh(); });
         Toggle(menu, "Theme in Word", State.Word, v => { State.Word = v; Settings.Set("word", v ? "1" : "0"); if (!v) Win.WordScrollBars(true); Find(); });
-        Toggle(menu, "Theme in Teams (rough)", State.Teams, v => { State.Teams = v; Settings.Set("teams", v ? "1" : "0"); Find(); });
         Toggle(menu, "Sparks when typing", State.Sparks, v => { State.Sparks = v; Settings.Set("sparks", v ? "1" : "0"); });
         // runs from sign-in by default, so the scene is there whenever Word or Teams opens
         var run = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run");
@@ -144,7 +143,7 @@ class Host : ApplicationContext
     {
         if (n++ % 4 == 0) FromDocument();
         var seen = new HashSet<IntPtr>();
-        Win.EnumWindows((h, _) => { if (Win.IsWindowVisible(h) && ((State.Word && Win.IsWord(h)) || (State.Teams && Win.IsTeams(h)))) seen.Add(h); return true; }, IntPtr.Zero);
+        Win.EnumWindows((h, _) => { if (Win.IsWindowVisible(h) && State.Word && Win.IsWord(h)) seen.Add(h); return true; }, IntPtr.Zero);
         foreach (var h in seen) if (!layers.ContainsKey(h)) layers[h] = new Layer(h);
         foreach (var h in layers.Keys.Where(k => !seen.Contains(k) || !Win.IsWindow(k)).ToList()) { layers[h].Close(); layers.Remove(h); }
     }
@@ -175,6 +174,11 @@ class Host : ApplicationContext
                 {
                     using var c = l.AcceptTcpClient(); using var s = c.GetStream();
                     var buf = new byte[2048]; var line = Encoding.ASCII.GetString(buf, 0, s.Read(buf, 0, buf.Length)).Split('\n')[0];
+                    if (line.StartsWith("GET /current"))   // the extension asks which theme is on, so every window matches
+                    {
+                        var j = Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Private-Network: true\r\nConnection: close\r\n\r\n{\"theme\":\"" + State.Scene + "\"}");
+                        s.Write(j, 0, j.Length); continue;
+                    }
                     var m = System.Text.RegularExpressions.Regex.Match(line, @"GET /theme\?id=([a-z0-9-]*)");
                     if (m.Success) ui.BeginInvoke(() => { if (!Known(m.Groups[1].Value)) return; Settings.Set("scene", m.Groups[1].Value); if (fileScene == null) Use(m.Groups[1].Value); });
                     var ok = Encoding.ASCII.GetBytes("HTTP/1.1 204 No Content\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Private-Network: true\r\nAccess-Control-Allow-Methods: GET\r\nConnection: close\r\n\r\n");
@@ -280,6 +284,7 @@ class AppWindow : Form
         ["site"] = ("Wild Themes", Themes.Site),
     };
     public static void Open(string which) { if (Apps.TryGetValue(which, out var a)) new AppWindow(a.title, a.url).Show(); }
+    static void Debug(string s) { var d = Environment.GetEnvironmentVariable("WILDTHEMES_DEBUG"); if (d != null) try { File.AppendAllText(Path.Combine(d, "log.txt"), DateTime.Now.ToString("T") + " " + s + Environment.NewLine); } catch { } }
 
     readonly Microsoft.Web.WebView2.WinForms.WebView2 web = new() { Dock = DockStyle.Fill };
     AppWindow(string title, string url)
@@ -298,8 +303,25 @@ class AppWindow : Form
             foreach (var x in await web.CoreWebView2.Profile.GetBrowserExtensionsAsync()) if (x.Name.Contains("Wild Themes")) await x.RemoveAsync();
             await web.CoreWebView2.Profile.AddBrowserExtensionAsync(Path.Combine(AppContext.BaseDirectory, "ext"));
         }
-        catch { /* older WebView2: the page still works, unthemed */ }
+        catch (Exception e) { Debug("extension: " + e.Message); /* older WebView2: the page still works, unthemed */ }
         web.CoreWebView2.DocumentTitleChanged += (_, _) => Text = web.CoreWebView2.DocumentTitle;
+        // WILDTHEMES_DEBUG=folder: write what was loaded and a picture of the page, for checking
+        var dbg = Environment.GetEnvironmentVariable("WILDTHEMES_DEBUG");
+        if (dbg != null) web.CoreWebView2.NavigationCompleted += async (_, _) =>
+        {
+            await System.Threading.Tasks.Task.Delay(9000);
+            try
+            {
+                var exts = string.Join(", ", (await web.CoreWebView2.Profile.GetBrowserExtensionsAsync()).Select(x => x.Name + (x.IsEnabled ? "" : " (off)")));
+                var ww = await web.CoreWebView2.ExecuteScriptAsync("document.documentElement.dataset.ww || ''");
+                var probe = Path.Combine(dbg, "probe.js");
+                if (File.Exists(probe)) Debug("probe: " + await web.CoreWebView2.ExecuteScriptAsync(File.ReadAllText(probe)));
+                Debug($"{web.CoreWebView2.Source} | extensions: {exts} | data-ww={ww}");
+                using var f = File.Create(Path.Combine(dbg, "appwindow.png"));
+                await web.CoreWebView2.CapturePreviewAsync(Microsoft.Web.WebView2.Core.CoreWebView2CapturePreviewImageFormat.Png, f);
+            }
+            catch (Exception e) { Debug("capture: " + e.Message); }
+        };
         web.CoreWebView2.Navigate(url);
     }
 }
