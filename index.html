@@ -28,7 +28,7 @@ try { if (/[?&]host=office\b/.test(location.search)) sessionStorage.setItem("wt-
     <div class="hero-text">
       <h1 class="display-1">Themes that live <em>inside</em> your documents</h1>
       <p class="lead">Animated backdrops for Word, PowerPoint, Excel and Teams. Drop in a file and the theme is saved into it, so anyone who opens it sees it, with nothing installed.</p>
-      <div class="row"><a class="btn btn-primary" href="#themes">Browse themes <svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><button class="btn btn-outline" data-open="install">Add to Chrome</button></div>
+      <div class="row"><a class="btn btn-primary" href="#themes">Browse themes <svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><button class="btn btn-outline" data-open="install">Add to Chrome</button><button class="btn btn-ghost" data-open="desktop">Desktop apps</button></div>
       <div class="apps"><span><b>Word</b>Pages</span><span><b>PowerPoint</b>Slides</span><span><b>Excel</b>Sheets</span><span><b>Teams</b>Chat + calls</span></div>
     </div>
     <figure class="frame" aria-label="Live preview"><iframe id="hero-stage" title="Theme preview" tabindex="-1"></iframe><figcaption id="hero-name"></figcaption></figure>
@@ -79,6 +79,17 @@ try { if (/[?&]host=office\b/.test(location.search)) sessionStorage.setItem("wt-
   <ol class="steps"><li>Unzip the download.</li><li>Open <span class="cmd"><code>chrome://extensions</code><button class="btn btn-ghost btn-xs copy" data-copy="chrome://extensions">Copy</button></span> and turn on <b>Developer mode</b>.</li><li>Click <b>Load unpacked</b> and choose the unzipped folder.</li></ol>
   <h4>Want it in its own app window?</h4>
   <p class="fine">Open Teams, Word, PowerPoint or Excel on the web in Edge or Chrome, then <b>⋮ › Apps › Install this site as an app</b> (Chrome: <b>⋮ › Cast, save and share › Install page as app</b>). It opens in its own window with a taskbar icon, and the theme comes with it. The Microsoft desktop apps can't be themed by anyone; there, themes come from your files or the <a href="addin/manifest.xml" download>Office add-in</a>.</p>
+</template>
+
+<template id="t-desktop">
+  <header class="dh"><h3 id="dlg-title">In the desktop apps</h3><p class="by">Word, PowerPoint, Excel and Teams on your computer.</p></header>
+  <h4>Word, PowerPoint and Excel: it's in the file</h4>
+  <ol class="steps"><li>Open a theme above and drop your file on it (or press <b>Word starter</b>).</li><li>Open the downloaded file in the desktop app. The scene, colours, fonts and styles are inside the file, so it looks themed with nothing installed.</li><li>Send it or hand it in: whoever opens it sees the theme too, in the desktop apps, on the web and in Teams.</li></ol>
+  <h4>Change or remove a theme without leaving Office</h4>
+  <ol class="steps"><li>Download the <a href="addin/manifest.xml" download>Office add-in</a>.</li><li>Windows: put it in a shared folder, add that folder under File › Options › Trust Center › Trust Center Settings › Trusted Add-in Catalogs (tick <b>Show in Menu</b>), restart Office, then Home › Add-ins › Shared Folder.</li><li>Then Home › <b>Themes</b> opens this website inside Office, working on the open file.</li></ol>
+  <h4>Teams and Word with live scenes, in their own window</h4>
+  <ol class="steps"><li><button class="btn btn-ghost btn-xs" data-open="install">Add the extension</button> to Chrome or Edge.</li><li>Open <a href="https://teams.microsoft.com" target="_blank" rel="noopener">Teams</a> or <a href="https://www.office.com/launch/word" target="_blank" rel="noopener">Word</a> on the web.</li><li>Chrome: <b>⋮ › Cast, save and share › Install page as app</b>. Edge: <b>⋯ › Apps › Install this site as an app</b>. It gets its own window and taskbar icon, with the theme.</li></ol>
+  <p class="fine">Microsoft's own Teams desktop app can't run extensions, so live scenes there come through the app window above.</p>
 </template>
 
 <template id="t-maker">
