@@ -17,7 +17,7 @@ MAX_BYTES = 2 * 1024 * 1024          # picture upload limit (checked while downl
 MIN_W, MIN_H = 1280, 720             # smallest picture accepted
 MAX_SIDE = 8000                      # largest picture side accepted
 BG_MAX_BYTES = 450 * 1024            # published background size cap
-THUMB_MAX_BYTES = 25 * 1024          # published thumbnail size cap
+THUMB_MAX_BYTES = 60 * 1024          # published thumbnail size cap (960x540 card picture)
 Image.MAX_IMAGE_PIXELS = MAX_SIDE * MAX_SIDE
 
 LABELS = {"Theme name": "name", "Your name": "author", "Dark or light": "mode", "Type": "kind", "Colours": "colours",
@@ -161,7 +161,7 @@ def picture_theme(raw, mode, outdir):
     out_w = max(MIN_W, out_w)
     bg = cover(im, out_w, round(out_w * 9 / 16))           # fresh image: no EXIF/metadata carried over
     bg_bytes = save_capped(bg, outdir / "bg.jpg", "JPEG", BG_MAX_BYTES, 82, 40)
-    th_bytes = save_capped(cover(bg, 320, 180), outdir / "thumb.webp", "WEBP", THUMB_MAX_BYTES, 78, 30)
+    th_bytes = save_capped(cover(bg, 960, 540), outdir / "thumb.webp", "WEBP", THUMB_MAX_BYTES, 78, 30)
     r, g, b = bg.resize((1, 1), Image.BOX).getpixel((0, 0))
     hh, ll, ss = colorsys.rgb_to_hls(r / 255, g / 255, b / 255)
     accent = hls_hex(hh, 0.62, max(ss, 0.6))
@@ -185,21 +185,21 @@ def glow(img, color, cx, cy, rx, ry):
 
 
 def colours_thumb(colors, effect, seed, outdir):
-    w, h = 320, 180
+    w, h = 960, 540
     img = Image.new("RGB", (w, h), rgb(colors[0]))
     glow(img, colors[1], 0, 0, w * 0.72, h * 0.54)          # matches the site: 120%×90% ellipse, fade by 60%
     glow(img, colors[2], w, h, w * 0.72, h * 0.54)
-    d, rnd = ImageDraw.Draw(img), random.Random(seed)
-    for _ in range({"stars": 26, "snow": 30, "bubbles": 9, "confetti": 22}.get(effect, 0)):
+    d, rnd, k = ImageDraw.Draw(img), random.Random(seed), w / 320      # dots were tuned at 320 px wide
+    for _ in range({"stars": 60, "snow": 70, "bubbles": 18, "confetti": 44}.get(effect, 0)):
         x, y = rnd.uniform(0, w), rnd.uniform(0, h)
         if effect == "stars":
-            r = rnd.choice((0.7, 1, 1.4)); d.ellipse((x - r, y - r, x + r, y + r), fill=(255, 255, 255))
+            r = rnd.choice((0.7, 1, 1.4)) * k; d.ellipse((x - r, y - r, x + r, y + r), fill=(255, 255, 255))
         elif effect == "snow":
-            r = rnd.uniform(1, 2.4); d.ellipse((x - r, y - r, x + r, y + r), fill=(255, 255, 255))
+            r = rnd.uniform(1, 2.4) * k; d.ellipse((x - r, y - r, x + r, y + r), fill=(255, 255, 255))
         elif effect == "bubbles":
-            r = rnd.uniform(3, 8); d.ellipse((x - r, y - r, x + r, y + r), outline=(255, 255, 255), width=1)
+            r = rnd.uniform(3, 8) * k; d.ellipse((x - r, y - r, x + r, y + r), outline=(255, 255, 255), width=2)
         else:
-            c = rnd.choice(("#ff3d7f", "#ffbe0b", "#3a86ff", "#06d6a0")); d.rectangle((x, y, x + 3, y + 5), fill=rgb(c))
+            c = rnd.choice(("#ff3d7f", "#ffbe0b", "#3a86ff", "#06d6a0")); d.rectangle((x, y, x + 3 * k, y + 5 * k), fill=rgb(c))
     return save_capped(img, outdir / "thumb.webp", "WEBP", THUMB_MAX_BYTES, 82, 30)
 
 

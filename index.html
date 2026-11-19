@@ -5,72 +5,92 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="claude:viewport-fit-sides" content="cover">
 <title>Wild Themes</title>
-<meta name="description" content="Animated themes for Word, PowerPoint, Excel and Teams, saved inside your files.">
+<meta name="description" content="Animated themes for Word, PowerPoint, Excel and Teams, saved inside your files so anyone who opens them sees them.">
 <link rel="icon" href="extension/icons/icon32.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono&family=Outfit:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="site.css">
 </head>
 <body>
-<header class="bar">
-  <a class="mark" href="./" aria-label="Wild Themes home"><i></i>wild themes</a>
-  <label class="search"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M9 3a6 6 0 1 0 3.7 10.7l3.3 3.3 1.4-1.4-3.3-3.3A6 6 0 0 0 9 3Zm0 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z"/></svg>
-    <input id="q" type="search" placeholder="Search themes" autocomplete="off" aria-label="Search themes"><kbd>/</kbd></label>
-  <nav><button class="link" id="open-submit">Submit</button><button class="cta" id="open-install">Add to Chrome</button></nav>
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="./">Wild Themes</a>
+    <nav class="links"><a href="#themes">Themes</a><a href="#make">Make your own</a><a href="https://github.com/Min3scon/Wild-Themes">GitHub</a></nav>
+    <button class="btn btn-primary btn-sm" data-open="install">Add to Chrome</button>
+  </div>
 </header>
 
 <main>
-  <div class="intro">
-    <h1>Themes for Word, PowerPoint, Excel and Teams.</h1>
-    <p>Saved inside your file, so anyone who opens it sees it.</p>
-  </div>
-  <div class="tools">
-    <div class="filters" role="radiogroup" aria-label="Filter themes">
-      <button role="radio" data-f="all" aria-checked="true">All</button><button role="radio" data-f="dark">Dark</button><button role="radio" data-f="light">Light</button><button role="radio" data-f="community">Community</button>
+  <section class="hero wrap">
+    <div class="hero-text">
+      <h1 class="display-1">Themes that live <em>inside</em> your documents</h1>
+      <p class="lead">Animated backdrops for Word, PowerPoint, Excel and Teams. Drop in a file and the theme is saved into it, so anyone who opens it sees it, with nothing installed.</p>
+      <div class="row"><a class="btn btn-primary" href="#themes">Browse themes <svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><button class="btn btn-outline" data-open="install">Add to Chrome</button></div>
+      <div class="apps"><span><b>Word</b>Pages</span><span><b>PowerPoint</b>Slides</span><span><b>Excel</b>Sheets</span><span><b>Teams</b>Chat + calls</span></div>
     </div>
-    <div class="seg motion-all" role="radiogroup" aria-label="Motion"><button role="radio" data-m="1" aria-checked="true">Animated</button><button role="radio" data-m="0">Still</button></div>
-  </div>
-  <div class="grid" id="grid"></div>
-  <p class="empty" id="empty" hidden></p>
+    <figure class="frame" aria-label="Live preview"><iframe id="hero-stage" title="Theme preview" tabindex="-1"></iframe><figcaption id="hero-name"></figcaption></figure>
+  </section>
+
+  <section id="themes" class="wrap section">
+    <h2 class="display-2">Themes</h2>
+    <p class="sub">Every theme comes animated or still. Hover a card to see it move.</p>
+    <div class="filterbar">
+      <label class="search"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Search themes..." aria-label="Search themes" autocomplete="off"></label>
+      <div class="group" id="filters" role="group" aria-label="Filter themes"></div>
+      <div class="group" id="motion" role="group" aria-label="Motion"><button class="btn btn-sm" data-m="1">Animated</button><button class="btn btn-sm" data-m="0">Still</button></div>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="empty" hidden><p></p></div>
+  </section>
+
+  <section id="make" class="wrap section">
+    <h2 class="display-3">Make your own</h2>
+    <p class="sub">Use any picture or colours on your computer. It stays on your computer unless you choose to share it, and shared themes go live once they're approved.</p>
+    <div class="tiles">
+      <button class="tile" data-open="maker"><b>Your own theme <svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></b><span>Pick a picture or three colours. Theme your files with it, right here. Nothing is uploaded.</span></button>
+      <button class="tile" data-open="maker" data-share="1"><b>Share with everyone <svg class="i" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg></b><span>Send it to the gallery. Pictures are checked and shrunk to under 2 MB, then approved by hand.</span></button>
+      <button class="tile" data-open="install"><b>Browser extension <svg class="i" viewBox="0 0 24 24"><path d="M12 5v10M7 11l5 5 5-5M5 19h14"/></svg></b><span>Live scenes around your page in Word, PowerPoint, Excel and Teams on the web.</span></button>
+    </div>
+  </section>
 </main>
-<footer>Unofficial · not affiliated with Microsoft · <a href="https://github.com/Min3scon/Wild-Themes">GitHub</a></footer>
+
+<footer class="wrap foot"><span>Wild Themes · unofficial, not affiliated with Microsoft</span><span><a href="addin/manifest.xml" download>Office add-in</a><a href="downloads/wild-theme-documents.zip">Themed documents</a><a href="https://github.com/Min3scon/Wild-Themes">GitHub</a></span></footer>
 
 <iframe class="peek" id="peek" title="" aria-hidden="true" tabindex="-1"></iframe>
-
-<div class="scrim" id="scrim" hidden></div>
-<aside class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" hidden>
-  <button class="x" id="close" aria-label="Close">×</button>
-  <div id="sheet-body"></div>
-</aside>
+<dialog id="dlg" aria-labelledby="dlg-title"><button class="close" id="close" aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button><div id="dlg-body"></div></dialog>
 
 <template id="t-theme">
+  <header class="dh"><h3 id="dlg-title"></h3><p class="by"></p><div class="pills"></div></header>
   <iframe class="stage" title="Theme preview"></iframe>
-  <div class="head"><h2 id="sheet-title"></h2><p class="meta"></p></div>
-  <label class="drop"><input type="file" accept=".docx,.pptx,.xlsx"><b>Drop a Word, PowerPoint or Excel file</b><span>The themed copy downloads straight away. It never leaves your computer.</span></label>
+  <p class="desc"></p>
+  <h4>Save it into a file</h4>
+  <label class="drop"><input type="file" accept=".docx,.pptx,.xlsx"><b>Drop a Word, PowerPoint or Excel file</b><span>The themed copy downloads straight away. Your file never leaves this computer.</span></label>
   <p class="msg" role="status"></p>
-  <div class="acts"><button data-a="starter">Word starter</button><button data-a="teams">Teams background</button><button data-a="ext">Use in extension</button><button data-a="remove">Remove a theme…</button></div>
+  <div class="row wrap-row"><button class="btn btn-outline btn-sm" data-a="starter">Word starter</button><button class="btn btn-outline btn-sm" data-a="teams">Teams background</button><button class="btn btn-outline btn-sm" data-a="ext">Use in extension</button><button class="btn btn-ghost btn-sm" data-a="remove">Remove a theme…</button></div>
 </template>
 
 <template id="t-install">
-  <h2 id="sheet-title">Add to Chrome</h2>
-  <p class="lede">Chrome only installs from its Web Store with one click. Until Wild Themes is there, it takes three steps.</p>
-  <a class="cta wide" href="downloads/wild-themes-extension.zip" download>Download extension</a>
-  <ol class="steps"><li>Unzip the download.</li><li>Open <code>chrome://extensions</code> <button class="copy" data-copy="chrome://extensions">Copy</button> and turn on <b>Developer mode</b>.</li><li>Click <b>Load unpacked</b> and choose the unzipped folder.</li></ol>
-  <p class="fine">Works in Chrome, Edge, Brave and Arc. On the desktop apps, themes come from your files instead: <a href="addin/manifest.xml" download>Office add-in</a> · <a href="downloads/wild-theme-documents.zip">18 themed documents</a></p>
+  <header class="dh"><h3 id="dlg-title">Add to Chrome</h3><p class="by">Chrome only installs in one click from its Web Store. Until Wild Themes is there, it's three steps.</p></header>
+  <a class="btn btn-primary btn-block" href="downloads/wild-themes-extension.zip" download><svg class="i" viewBox="0 0 24 24"><path d="M12 5v10M7 11l5 5 5-5M5 19h14"/></svg> Download the extension</a>
+  <ol class="steps"><li>Unzip the download.</li><li>Open <span class="cmd"><code>chrome://extensions</code><button class="btn btn-ghost btn-xs copy" data-copy="chrome://extensions">Copy</button></span> and turn on <b>Developer mode</b>.</li><li>Click <b>Load unpacked</b> and choose the unzipped folder.</li></ol>
+  <p class="fine">Works in Chrome, Edge, Brave and Arc. On the desktop apps, themes come from your files, or the <a href="addin/manifest.xml" download>Office add-in</a>.</p>
 </template>
 
-<template id="t-submit">
-  <h2 id="sheet-title">Submit a theme</h2>
-  <p class="lede">Make one from a picture or three colours. It goes live once it's approved.</p>
-  <label class="field">Name<input id="s-name" maxlength="30" placeholder="Midnight Harbour"></label>
-  <div class="seg" role="radiogroup" aria-label="Made from"><button role="radio" data-k="picture" aria-checked="true">Picture</button><button role="radio" data-k="colours">Colours</button></div>
-  <div data-for="picture"><label class="drop small"><input type="file" id="s-pic" accept="image/png,image/jpeg,image/webp"><b>Choose a picture</b><span>At least 1280×720. Shrunk to fit 2 MB.</span></label></div>
-  <div data-for="colours" hidden class="swatches"><input type="color" id="s-c1" value="#120a2a" aria-label="Background"><input type="color" id="s-c2" value="#ff2bd6" aria-label="Glow 1"><input type="color" id="s-c3" value="#21e6ff" aria-label="Glow 2">
-    <select id="s-fx" aria-label="Effect"><option value="none">No effect</option><option value="stars">Twinkling stars</option><option value="snow">Snow</option><option value="bubbles">Bubbles</option><option value="confetti">Confetti</option></select></div>
-  <div class="mini" id="s-prev"></div>
-  <p class="msg" id="s-msg" role="status"></p>
-  <button class="cta wide" id="s-go" disabled>Continue on GitHub</button>
-  <p class="fine">Opens a GitHub form filled in for you. Drag the downloaded picture into it and send. Max 2 MB, PNG, JPG or WebP.</p>
+<template id="t-maker">
+  <header class="dh"><h3 id="dlg-title">Your own theme</h3><p class="by">Stays on this computer. Share it only if you want to.</p></header>
+  <div class="seg" role="group" aria-label="Made from"><button class="btn btn-sm" data-k="picture">Picture</button><button class="btn btn-sm" data-k="colours">Colours</button></div>
+  <label class="drop small" data-for="picture"><input type="file" id="m-pic" accept="image/png,image/jpeg,image/webp"><b>Choose a picture</b><span>Any picture works. It's shrunk to 1920×1080 and under 450 KB, like the built-in themes.</span></label>
+  <div class="swatches" data-for="colours" hidden><input type="color" id="m-c1" value="#120a2a" aria-label="Background"><input type="color" id="m-c2" value="#ff2bd6" aria-label="Glow 1"><input type="color" id="m-c3" value="#21e6ff" aria-label="Glow 2">
+    <select id="m-fx" aria-label="Effect"><option value="none">No effect</option><option value="stars">Twinkling stars</option><option value="snow">Snow</option><option value="bubbles">Bubbles</option><option value="confetti">Confetti</option></select></div>
+  <iframe class="stage" id="m-stage" title="Your theme preview"></iframe>
+  <p class="msg" id="m-msg" role="status"></p>
+  <label class="drop" id="m-drop"><input type="file" accept=".docx,.pptx,.xlsx"><b>Drop a file to theme it</b><span>Word, PowerPoint or Excel. Downloads straight away.</span></label>
+  <div class="row wrap-row"><button class="btn btn-outline btn-sm" id="m-ext">Use in extension</button><button class="btn btn-outline btn-sm" id="m-teams">Teams background</button></div>
+  <div class="share" id="m-share">
+    <h4>Share with everyone</h4>
+    <p class="fine">Name it, then finish on GitHub (free account). It appears in the gallery once it's approved.</p>
+    <div class="row"><input class="input" id="m-name" maxlength="30" placeholder="Theme name"><button class="btn btn-primary btn-sm" id="m-go">Share</button></div>
+  </div>
 </template>
 
 <script src="extension/lib/themes.js"></script>
