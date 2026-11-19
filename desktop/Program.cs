@@ -306,6 +306,8 @@ class AppWindow : Form
         }
         catch (Exception e) { Debug("extension: " + e.Message); /* older WebView2: the page still works, unthemed */ }
         web.CoreWebView2.DocumentTitleChanged += (_, _) => Text = web.CoreWebView2.DocumentTitle;
+        // Windows "reduce motion" would freeze the scene; the tray's Animated switch is the user's own choice
+        if (State.Animated) await web.CoreWebView2.CallDevToolsProtocolMethodAsync("Emulation.setEmulatedMedia", "{\"features\":[{\"name\":\"prefers-reduced-motion\",\"value\":\"no-preference\"}]}");
         // WILDTHEMES_DEBUG=folder: write what was loaded and a picture of the page, for checking
         var dbg = Environment.GetEnvironmentVariable("WILDTHEMES_DEBUG");
         if (dbg != null) web.CoreWebView2.NavigationCompleted += async (_, _) =>

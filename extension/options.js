@@ -33,14 +33,14 @@ const themeFor = (id) => T[id] ? { ...T[id], id } : remote[id] ? { ...remote[id]
 const msg = (t) => { $("#msg").textContent = t; };
 async function loadDocx(file) {
   if (!file) return;
-  if (!/\.(docx|docm|pptx|pptm|xlsx|xlsm)$/i.test(file.name)) return msg("Choose a .docx, .pptx or .xlsx file. Older .doc, .ppt and .xls files need saving in the new format first.");
+  if (!/\.(docx|docm|pptx|pptm|xlsx|xlsm)$/i.test(file.name)) return msg("Choose a .docx file. Older .doc files need saving in the new format first.");
   docKind = WWAssets.kindOf(file.name);
   docx = new Uint8Array(await file.arrayBuffer()); docName = file.name.replace(/\.[^.]+$/, ""); docExt = file.name.slice(docName.length);
   $("#dropname").textContent = file.name; $("#stamp").disabled = false; $("#unstamp").disabled = false;
   try {   // what's already in the file (shared core: same answer as the website and the add-in)
     const info = await WTCore.inspect(docx), d = WTUI.describe(info);
     msg(info.status === "none" ? "" : `This file has ${d.title} (${d.badge.toLowerCase()}). Picking another theme replaces it; the original look is kept inside the file for “Remove”.`);
-  } catch (e) { return msg("This file couldn't be read. Is it really a Word, PowerPoint or Excel file?"), ($("#stamp").disabled = true); }
+  } catch (e) { return msg("This file couldn't be read. Is it really a Word file?"), ($("#stamp").disabled = true); }
   stampNow();                                    // no extra click: the themed copy is made straight away
 }
 $("#docx").onchange = (e) => loadDocx(e.target.files[0]);
@@ -190,3 +190,7 @@ $("#imp").onchange = async (e) => {
 };
 
 chrome.storage.local.get(["customs", "community", "remote"], (c) => { customs = c.customs || []; community = c.community || []; remote = c.remote || {}; fillPick(); renderMine(); preview(); });
+
+// Picking a theme applies it straight away (no file needed); the file steps below are optional.
+chrome.storage.sync.get({ theme: "" }, (v) => { if (v.theme) $("#pick").value = v.theme; });
+$("#pick").addEventListener("change", () => chrome.storage.sync.set({ theme: $("#pick").value, on: true }));
