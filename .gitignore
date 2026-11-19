@@ -1,2 +1,5 @@
 node_modules/
 tests/out/
+desktop/bin/
+desktop/obj/
+desktop/dist/

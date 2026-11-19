@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>disable</Nullable>
+    <AssemblyName>WildThemes</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- the same animated scenes as the extension -->
+    <None Include="..\extension\backdrops-wide\*.gif" LinkBase="scenes" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
