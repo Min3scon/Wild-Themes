@@ -12,7 +12,7 @@
   window.__ww = 1;
   const T = self.WW_THEMES, DEF = { on: true, theme: "synthwave", motion: "auto", sparks: true, docs: {} };
   const ATTR = (n, a, v) => v == null ? n.removeAttribute(a) : n.setAttribute(a, v);
-  let S = DEF, custom = {}, id, t, bg, fx, file, pages = [], tm, last = 0, ptr, k = 0;
+  let S = DEF, custom = {}, R = {}, id, t, bg, fx, file, pages = [], tm, last = 0, ptr, k = 0;
 
   // Which file is this? A short hash of the WOPISrc file address (the address itself is never stored).
   let key = (new URLSearchParams(L.search.toLowerCase()).get("wopisrc") || "").split("?")[0], h = 2166136261;
@@ -34,7 +34,7 @@
   // this document's choice > the theme saved in the file > your default
   const pick = () => {
     const w = (key && S.docs[key]) || (file && file.id) || S.theme;
-    return T[w] ? [w, T[w]] : custom[w] ? [w, custom[w]]
+    return T[w] ? [w, T[w]] : R[w] ? [w, R[w]] : custom[w] ? [w, custom[w]]
       : file && w == file.id ? [w, { custom: 1, mode: file.mode, accent: file.accent, accent2: file.accent2, fx: "dot",
         colors: [file.mode == "light" ? "#f4f1ff" : "#0d0b1a", file.accent, file.accent2] }]
       : T[S.theme] ? [S.theme, T[S.theme]] : [];
@@ -94,6 +94,10 @@
   // Custom picture themes: decoded once, drawn once onto a canvas. Nothing after that.
   async function picture() {
     const own = bg, b64 = (await chrome.storage.local.get("img:" + t.image))["img:" + t.image];
+    if (!b64 && t.community) {                                    // community picture not fetched yet: fetch once, then redraw
+      chrome.runtime.sendMessage({ picture: t.image }, (r) => { if (r && r.ok && own == bg) { clear(); apply(); } });
+      return;
+    }
     if (!b64 || own != bg) return;
     const bin = atob(b64.slice(b64.indexOf(",") + 1)), u8 = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);              // no fetch: works under any page policy
@@ -217,12 +221,12 @@
   addEventListener("scroll", () => later(400), { capture: true, passive: true });
   chrome.runtime.onMessage.addListener((m, _, reply) => { m == "ww-status" && reply({ docKey: key, active: id, file }); });
 
-  const load = () => chrome.storage.sync.get(DEF, (v) => chrome.storage.local.get("customs", (c) => {
+  const load = () => chrome.storage.sync.get(DEF, (v) => chrome.storage.local.get(["customs", "community", "remote"], (c) => {
     S = { ...DEF, ...v };
-    const before = id && !T[id] && JSON.stringify(custom[id]);
-    custom = {};
-    (c.customs || []).forEach((x) => (custom[x.id] = { ...x, custom: 1 }));
-    if (before && before != JSON.stringify(custom[id])) clear();   // rebuild only if that custom theme changed
+    const before = id && !T[id] && JSON.stringify(custom[id] || R[id]);
+    custom = {}; R = c.remote || {};                                   // R: built-in themes added on the website since
+    (c.community || []).concat(c.customs || []).forEach((x) => (custom[x.id] = { ...x, custom: 1 }));
+    if (before && before != JSON.stringify(custom[id] || R[id])) clear();   // rebuild only if that custom theme changed
     file = readFile() || file;
     apply();
   }));

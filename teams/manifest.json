@@ -1,0 +1,25 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.17",
+  "version": "1.0.0",
+  "id": "4c1c6e92-2ae9-529a-b618-cae05fa7fc3a",
+  "developer": {
+    "name": "Wild Themes",
+    "websiteUrl": "https://min3scon.github.io/Wild-Themes/",
+    "privacyUrl": "https://min3scon.github.io/Wild-Themes/studio.html",
+    "termsOfUseUrl": "https://min3scon.github.io/Wild-Themes/"
+  },
+  "name": { "short": "Wild Themes", "full": "Wild Themes for Word, PowerPoint and Excel" },
+  "description": {
+    "short": "Check, change or remove the theme saved inside an Office file.",
+    "full": "Wild Themes saves animated-scene themes (backdrop, colours, fonts, text and table styles) inside Word, PowerPoint and Excel files, so anyone who opens them sees the theme with nothing installed. This Teams app opens the File studio: open a file from your computer to see which theme it carries and whether it's intact, apply or change a theme, tune its look and effects, restore it or remove it. Files are processed in the tab and never uploaded."
+  },
+  "icons": { "color": "color.png", "outline": "outline.png" },
+  "accentColor": "#B83A74",
+  "staticTabs": [
+    { "entityId": "studio", "name": "File studio", "contentUrl": "https://min3scon.github.io/Wild-Themes/studio.html?host=teams", "websiteUrl": "https://min3scon.github.io/Wild-Themes/studio.html", "scopes": ["personal"] },
+    { "entityId": "themes", "name": "Themes", "contentUrl": "https://min3scon.github.io/Wild-Themes/?host=teams", "websiteUrl": "https://min3scon.github.io/Wild-Themes/", "scopes": ["personal"] }
+  ],
+  "showLoadingIndicator": false,
+  "validDomains": ["min3scon.github.io"]
+}

@@ -22,7 +22,8 @@
   async function backdrop(t, sec, base, imageB64, kind) {
     if (kind == "xlsx") return washed(t, base, imageB64);
     if (!t.custom) try {
-      const r = await fetch(base + (kind == "pptx" ? "backdrops-wide/" : "backdrops/") + t.id + ".gif");
+      // themes added on the website since this copy was made carry their own picture addresses
+      const r = await fetch((kind == "pptx" ? t.backdropWideUrl : t.backdropUrl) || base + (kind == "pptx" ? "backdrops-wide/" : "backdrops/") + t.id + ".gif");
       if (r.ok) return { bytes: new Uint8Array(await r.arrayBuffer()), ext: "gif" };
     } catch (_) { /* no shipped backdrop: draw one below */ }
     const w = 794, h = Math.round(794 * sec.pageH / sec.pageW), c = cv(w, h), g = c.getContext("2d");
@@ -57,7 +58,7 @@
   // Teams meeting background: 1920x1080 still of the scene.
   async function teams(t, base, imageB64) {
     if (!t.custom) try {
-      const r = await fetch(base + "teams-backgrounds/" + t.id + ".jpg");
+      const r = await fetch(t.teamsUrl || base + "teams-backgrounds/" + t.id + ".jpg");
       if (r.ok) return new Uint8Array(await r.arrayBuffer());
     } catch (_) { /* draw one */ }
     const c = cv(1920, 1080), g = c.getContext("2d");
@@ -80,7 +81,7 @@
   }
 
   // One place that knows which stamper and which pictures each file type needs.
-  const kindOf = (name) => (/\.pptx$/i.test(name) ? "pptx" : /\.xlsx$/i.test(name) ? "xlsx" : "docx");
+  const kindOf = (name) => (/\.pptx$/i.test(name) ? "pptx" : /\.xls[xm]$/i.test(name) ? "xlsx" : "docx");
   const stamperFor = (kind) => ({ docx: self.WWStamper, pptx: self.WWStamperPptx, xlsx: self.WWStamperXlsx })[kind];
   // Word plays an animated GIF as a video, drawn ON TOP of the text with a play button,
   // whatever its wrap setting. So Word files always get the scene's first frame as a JPEG.
@@ -89,12 +90,19 @@
     const c = cv(img.width, img.height); c.getContext("2d").drawImage(img, 0, 0);
     return { bytes: await bytesOf(c, "image/jpeg", .88), ext: "jpeg" };
   }
-  async function assetsFor(t, kind, sec, base, imageB64) {
-    let bd = await backdrop(t, sec, base, imageB64, kind);
-    if (kind == "docx" && bd.ext == "gif") bd = await stillJpeg(bd);
-    return { backdrop: bd,
-      panel: kind == "xlsx" ? null : async (_s, rect) => (await panel(t, rect, kind == "pptx" ? .9 : 1)).bytes };
+  // settings (WTCore.settingsFor): backdrop off = no pictures; panel = panel opacity (60-100);
+  // animated (PowerPoint) = keep the moving GIF, otherwise its first frame as a still.
+  async function assetsFor(t, kind, sec, base, imageB64, settings) {
+    const s = settings || {};
+    if (s.backdrop === false) return { backdrop: null, panel: null };
+    let bd = await backdrop(t, sec || { pageW: 11906, pageH: 16838 }, base, imageB64, kind);
+    if (bd.ext == "gif" && (kind == "docx" || (kind == "pptx" && s.animated === false))) bd = await stillJpeg(bd);
+    const alpha = (s.panel || (kind == "pptx" ? 90 : 100)) / 100;
+    return { backdrop: bd, panel: kind == "xlsx" ? null : async (_s, rect) => (await panel(t, rect, alpha)).bytes };
   }
+  // The picture-maker WTCore.apply() wants. imageFor(theme) returns a custom theme's picture (data URL) or null.
+  const maker = (base, imageFor) => async (t, kind, sec, settings) =>
+    assetsFor(t.custom || !self.WW_THEMES[t.id] ? (t.doc ? t : forCustom(t)) : t, kind, sec, base, imageFor ? await imageFor(t) : null, settings);
 
-  self.WWAssets = { forCustom, backdrop, panel, washed, teams, textSafe, kindOf, stamperFor, assetsFor };
+  self.WWAssets = { forCustom, backdrop, panel, washed, teams, textSafe, kindOf, stamperFor, assetsFor, maker };
 })();

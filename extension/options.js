@@ -1,5 +1,5 @@
 const T = self.WW_THEMES, $ = (s) => document.querySelector(s);
-let customs = [], docx = null, docName = "", docKind = "docx", kind = "colours", picData = null;
+let customs = [], community = [], remote = {}, docx = null, docName = "", docKind = "docx", kind = "colours", picData = null;
 
 // ---------- tabs
 function tab(name) {
@@ -22,22 +22,24 @@ function fillPick() {
   };
   group("Dark", Object.entries(T).filter(([, t]) => t.mode === "dark").map(([id, t]) => [id, t.name]));
   group("Light", Object.entries(T).filter(([, t]) => t.mode === "light").map(([id, t]) => [id, t.name]));
+  group("New on the website", Object.entries(remote).map(([id, t]) => [id, t.name]));
+  group("Community", community.map((c) => [c.id, c.name]));
   group("Yours", customs.map((c) => [c.id, c.name]));
   if (keep) sel.value = keep;
 }
-const themeFor = (id) => T[id] ? { ...T[id], id } : WWAssets.forCustom({ ...customs.find((c) => c.id === id) });
+const themeFor = (id) => T[id] ? { ...T[id], id } : remote[id] ? { ...remote[id], id } : WWAssets.forCustom({ ...(customs.find((c) => c.id === id) || community.find((c) => c.id === id)) });
 
 // ---------- save a theme into a Word file
 const msg = (t) => { $("#msg").textContent = t; };
 async function loadDocx(file) {
   if (!file) return;
-  if (!/\.(docx|pptx|xlsx)$/i.test(file.name)) return msg("Choose a .docx, .pptx or .xlsx file. Older .doc, .ppt and .xls files need saving in the new format first.");
+  if (!/\.(docx|docm|pptx|pptm|xlsx|xlsm)$/i.test(file.name)) return msg("Choose a .docx, .pptx or .xlsx file. Older .doc, .ppt and .xls files need saving in the new format first.");
   docKind = WWAssets.kindOf(file.name);
-  docx = new Uint8Array(await file.arrayBuffer()); docName = file.name.replace(/\.(docx|pptx|xlsx)$/i, "");
+  docx = new Uint8Array(await file.arrayBuffer()); docName = file.name.replace(/\.[^.]+$/, ""); docExt = file.name.slice(docName.length);
   $("#dropname").textContent = file.name; $("#stamp").disabled = false; $("#unstamp").disabled = false;
-  try {
-    const info = await WWAssets.stamperFor(docKind).analyze(docx);
-    msg(info.existingTheme ? `This file already has the ${(T[info.existingTheme] || {}).name || "a"} theme. Picking another one replaces it.` : "");
+  try {   // what's already in the file (shared core: same answer as the website and the add-in)
+    const info = await WTCore.inspect(docx), d = WTUI.describe(info);
+    msg(info.status === "none" ? "" : `This file has ${d.title} (${d.badge.toLowerCase()}). Picking another theme replaces it; the original look is kept inside the file for “Remove”.`);
   } catch (e) { return msg("This file couldn't be read. Is it really a Word, PowerPoint or Excel file?"), ($("#stamp").disabled = true); }
   stampNow();                                    // no extra click: the themed copy is made straight away
 }
@@ -47,8 +49,14 @@ drop.ondragover = (e) => { e.preventDefault(); drop.classList.add("over"); };
 drop.ondragleave = () => drop.classList.remove("over");
 drop.ondrop = (e) => { e.preventDefault(); drop.classList.remove("over"); loadDocx(e.dataTransfer.files[0]); };
 
-const imageOf = async (t) => t.image ? (await chrome.storage.local.get("img:" + t.image))["img:" + t.image] : null;
+const imageOf = async (t) => {
+  if (!t.image) return null;
+  if (t.community) await new Promise((ok) => chrome.runtime.sendMessage({ picture: t.image }, ok));   // fetched once from the website
+  return (await chrome.storage.local.get("img:" + t.image))["img:" + t.image];
+};
 const assetsFor = async (t, sec, k = docKind) => WWAssets.assetsFor(t, k, sec, chrome.runtime.getURL(""), await imageOf(t));
+const maker = WWAssets.maker(chrome.runtime.getURL(""), imageOf);
+let docExt = ".docx";
 function download(bytes, name) {
   const url = URL.createObjectURL(new Blob([bytes]));
   Object.assign(document.createElement("a"), { href: url, download: name }).click();
@@ -58,15 +66,16 @@ async function stampNow() {
   const t = themeFor($("#pick").value);
   msg("Working…");
   try {
-    const S = WWAssets.stamperFor(docKind), info = await S.analyze(docx);
-    const out = await S.stamp(docx, t, await assetsFor(t, info.sections[0]));
-    download(out, `${docName} (${t.name}).${docKind}`);
-    msg(`Done. "${docName} (${t.name}).${docKind}" is in your downloads. Upload it to OneDrive and open it.`);
+    const out = await WTCore.apply(docx, t, {}, maker, "Wild Themes extension");
+    const check = await WTCore.inspect(out);
+    if (check.status !== "intact") throw new Error(check.problems.map((p) => p.text).join(" "));
+    download(out, `${docName} (${t.name})${docExt}`);
+    msg(`Done and checked. "${docName} (${t.name})${docExt}" is in your downloads. Upload it to OneDrive and open it.`);
   } catch (e) { msg("Something went wrong theming this file: " + e.message); }
 }
 $("#stamp").onclick = stampNow;
 $("#unstamp").onclick = async () => {
-  try { download(await WWAssets.stamperFor(docKind).unstamp(docx), `${docName} (no theme).${docKind}`); msg(`"${docName} (no theme).${docKind}" is in your downloads.`); }
+  try { download(await WTCore.remove(docx), `${docName} (no theme)${docExt}`); msg(`"${docName} (no theme)${docExt}" is in your downloads, with the file's original look put back.`); }
   catch (e) { msg("Couldn't remove the theme: " + e.message); }
 };
 $("#teamsbg").onclick = async () => {
@@ -180,4 +189,4 @@ $("#imp").onchange = async (e) => {
   } catch (_) { cmsg("That isn't a Wild Themes theme file."); }
 };
 
-chrome.storage.local.get("customs", (c) => { customs = c.customs || []; fillPick(); renderMine(); preview(); });
+chrome.storage.local.get(["customs", "community", "remote"], (c) => { customs = c.customs || []; community = c.community || []; remote = c.remote || {}; fillPick(); renderMine(); preview(); });

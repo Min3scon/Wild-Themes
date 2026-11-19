@@ -1,0 +1,7 @@
+{
+  "name": "wild-themes-tests",
+  "private": true,
+  "description": "Regression tests for the Wild Themes document pipeline (shared by the site, extension and add-in).",
+  "scripts": { "test": "NODE_PATH=./node_modules:$NODE_PATH node --test --test-concurrency=1 \"*.test.js\"" },
+  "devDependencies": { "jszip": "3.10.1", "@xmldom/xmldom": "0.8.10" }
+}

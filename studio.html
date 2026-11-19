@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>File studio · Wild Themes</title>
+<meta name="description" content="Check, change, configure, restore or remove the theme saved inside a Word, PowerPoint or Excel file. Runs in your browser; nothing is uploaded.">
+<link rel="icon" href="extension/icons/icon32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono&family=Outfit:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="site.css">
+<script>/* As the Office add-in, these same pages run inside Word, PowerPoint and Excel (addin/office-host.js). */
+try { if (/[?&]host=office\b/.test(location.search)) sessionStorage.setItem("wt-host", "office");
+  if (sessionStorage.getItem("wt-host") === "office") document.write('<script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"><\/script><script src="addin/office-host.js"><\/script>'); } catch (_) {}</script>
+</head>
+<body class="studio">
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="./">Wild Themes</a>
+    <nav class="links"><a href="./#themes">Themes</a><a href="studio.html" aria-current="page">File studio</a><a href="https://github.com/Min3scon/Wild-Themes">GitHub</a></nav>
+  </div>
+</header>
+
+<main class="wrap section">
+  <h1 class="display-2">File studio</h1>
+  <p class="sub">Open a Word, PowerPoint or Excel file to see the theme saved inside it, check it's intact, change it, tune it, restore it or take it out. Everything happens in this browser tab: your file is never uploaded.</p>
+
+  <label class="drop st-drop" id="drop"><input type="file" accept=".docx,.docm,.pptx,.pptm,.xlsx,.xlsm"><b>Open or drop a file</b><span>.docx, .pptx or .xlsx (macro-enabled files too)</span></label>
+
+  <section class="st-file" id="file" hidden aria-live="polite">
+    <div class="st-head"><span class="st-sw" id="sw" aria-hidden="true"></span>
+      <div class="st-text"><b id="fname"></b><span id="fsub"></span><small id="fpath"></small></div>
+      <span class="st-badge" id="badge" hidden></span></div>
+    <ul class="st-problems" id="problems" hidden></ul>
+    <div class="row wrap-row">
+      <button class="btn btn-primary btn-sm" id="download" disabled>Download the file</button>
+      <button class="btn btn-outline btn-sm" id="repair" hidden>Restore theme</button>
+      <button class="btn btn-outline btn-sm" id="remove" hidden>Remove theme</button>
+      <button class="btn btn-ghost btn-sm" id="undo" hidden>Undo</button>
+      <button class="btn btn-ghost btn-sm" id="verify" hidden>Check again</button>
+    </div>
+    <p class="msg" id="msg" role="status"></p>
+  </section>
+
+  <div class="st-cols" id="tools" hidden>
+    <section>
+      <h2 class="display-3">Theme</h2>
+      <div class="st-grid" id="grid" role="radiogroup" aria-label="Theme"></div>
+      <div class="row st-import"><label class="btn btn-ghost btn-sm">Import a .wildtheme<input id="import" type="file" accept=".wildtheme,application/json" hidden></label></div>
+    </section>
+    <section>
+      <h2 class="display-3">Look &amp; effects</h2>
+      <form class="look" id="look"></form>
+      <div class="row"><button class="btn btn-outline btn-sm" id="applyLook" disabled>Apply changes</button><button class="btn btn-ghost btn-sm" id="resetLook">Defaults</button></div>
+      <div class="look" id="autoRow" hidden><label class="switch"><input type="checkbox" id="auto"><span><b>Open Wild Themes by itself</b><small>When a file that carries a theme is opened.</small></span></label></div>
+    </section>
+  </div>
+</main>
+
+<footer class="wrap foot"><span>Wild Themes · unofficial, not affiliated with Microsoft</span><span><a href="./">Gallery</a><a href="addin/manifest.xml" download>Office add-in</a><a href="https://github.com/Min3scon/Wild-Themes">GitHub</a></span></footer>
+<script src="extension/vendor/jszip.min.js"></script>
+<script src="extension/lib/themes.js"></script>
+<script src="extension/lib/stamper.js"></script>
+<script src="extension/lib/stamper-pptx.js"></script>
+<script src="extension/lib/stamper-xlsx.js"></script>
+<script src="extension/lib/assets.js"></script>
+<script src="extension/lib/wtcore.js"></script>
+<script src="extension/lib/wtui.js"></script>
+<script src="studio.js"></script>
+</body>
+</html>

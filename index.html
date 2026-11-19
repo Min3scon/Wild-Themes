@@ -10,12 +10,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono&family=Outfit:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="site.css">
+<script>/* As the Office add-in, these same pages run inside Word, PowerPoint and Excel (addin/office-host.js). */
+try { if (/[?&]host=office\b/.test(location.search)) sessionStorage.setItem("wt-host", "office");
+  if (sessionStorage.getItem("wt-host") === "office") document.write('<script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"><\/script><script src="addin/office-host.js"><\/script>'); } catch (_) {}</script>
 </head>
 <body>
 <header class="nav">
   <div class="wrap nav-in">
     <a class="brand" href="./">Wild Themes</a>
-    <nav class="links"><a href="#themes">Themes</a><a href="#make">Make your own</a><a href="https://github.com/Min3scon/Wild-Themes">GitHub</a></nav>
+    <nav class="links"><a href="#themes">Themes</a><a href="#make">Make your own</a><a href="studio.html">File studio</a><a href="https://github.com/Min3scon/Wild-Themes">GitHub</a></nav>
     <button class="btn btn-primary btn-sm" data-open="install">Add to Chrome</button>
   </div>
 </header>
@@ -49,6 +52,7 @@
     <div class="tiles">
       <button class="tile" data-open="maker"><b>Your own theme <svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></b><span>Pick a picture or three colours. Theme your files with it, right here. Nothing is uploaded.</span></button>
       <button class="tile" data-open="maker" data-share="1"><b>Share with everyone <svg class="i" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg></b><span>Send it to the gallery. Pictures are checked and shrunk to under 2 MB, then approved by hand.</span></button>
+      <a class="tile" href="studio.html"><b>File studio <svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></b><span>Open any themed file to check it's intact, change or tune its theme, restore it or take it out.</span></a>
       <button class="tile" data-open="install"><b>Browser extension <svg class="i" viewBox="0 0 24 24"><path d="M12 5v10M7 11l5 5 5-5M5 19h14"/></svg></b><span>Live scenes around your page in Word, PowerPoint, Excel and Teams on the web.</span></button>
     </div>
   </section>
@@ -66,7 +70,7 @@
   <h4>Save it into a file</h4>
   <label class="drop"><input type="file" accept=".docx,.pptx,.xlsx"><b>Drop a Word, PowerPoint or Excel file</b><span>The themed copy downloads straight away. Your file never leaves this computer.</span></label>
   <p class="msg" role="status"></p>
-  <div class="row wrap-row"><button class="btn btn-outline btn-sm" data-a="starter">Word starter</button><button class="btn btn-outline btn-sm" data-a="teams">Teams background</button><button class="btn btn-outline btn-sm" data-a="ext">Use in extension</button><button class="btn btn-ghost btn-sm" data-a="remove">Remove a theme…</button></div>
+  <div class="row wrap-row"><button class="btn btn-outline btn-sm" data-a="starter">Word starter</button><button class="btn btn-outline btn-sm" data-a="teams">Teams background</button><button class="btn btn-outline btn-sm" data-a="ext">Use in extension</button><a class="btn btn-ghost btn-sm" data-studio href="studio.html">Check or remove a theme…</a></div>
 </template>
 
 <template id="t-install">

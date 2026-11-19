@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Wild Themes for Microsoft 365",
   "short_name": "Wild Themes",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Animated themes for Word, PowerPoint, Excel and Teams on the web, and a tool that saves a theme into any Word, PowerPoint or Excel file so everyone who opens it sees it.",
   "icons": {
     "16": "icons/icon16.png",
@@ -29,7 +29,8 @@
   "permissions": [
     "storage",
     "unlimitedStorage",
-    "scripting"
+    "scripting",
+    "alarms"
   ],
   "content_scripts": [
     {
@@ -71,6 +72,7 @@
     "https://excel.cloud.microsoft/*",
     "https://teams.microsoft.com/*",
     "https://teams.live.com/*",
-    "https://teams.cloud.microsoft/*"
+    "https://teams.cloud.microsoft/*",
+    "https://min3scon.github.io/*"
   ]
 }
