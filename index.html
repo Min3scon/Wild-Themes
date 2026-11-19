@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="claude:viewport-fit-sides" content="cover">
 <title>Wild Themes</title>
-<meta name="description" content="Animated themes for Word, PowerPoint, Excel and Teams, saved inside your files so anyone who opens them sees them.">
+<meta name="description" content="Animated themes for Word and Teams, saved inside your files so anyone who opens them sees them.">
 <link rel="icon" href="extension/icons/icon32.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono&family=Outfit:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="site.css">
-<script>/* As the Office add-in, these same pages run inside Word, PowerPoint and Excel (addin/office-host.js). */
+<script>/* As the Office add-in, these same pages run inside Word (addin/office-host.js). */
 try { if (/[?&]host=office\b/.test(location.search)) sessionStorage.setItem("wt-host", "office");
   if (sessionStorage.getItem("wt-host") === "office") document.write('<script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"><\/script><script src="addin/office-host.js"><\/script>'); } catch (_) {}</script>
 </head>
@@ -27,9 +27,9 @@ try { if (/[?&]host=office\b/.test(location.search)) sessionStorage.setItem("wt-
   <section class="hero wrap">
     <div class="hero-text">
       <h1 class="display-1">Themes that live <em>inside</em> your documents</h1>
-      <p class="lead">Animated backdrops for Word, PowerPoint, Excel and Teams. Drop in a file and the theme is saved into it, so anyone who opens it sees it, with nothing installed.</p>
+      <p class="lead">Animated backdrops for Word and Teams. Drop in a file and the theme is saved into it, so anyone who opens it sees it, with nothing installed.</p>
       <div class="row"><a class="btn btn-primary" href="#themes">Browse themes <svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><button class="btn btn-outline" data-open="install">Add to Chrome</button><button class="btn btn-ghost" data-open="desktop">Desktop apps</button></div>
-      <div class="apps"><span><b>Word</b>Pages</span><span><b>PowerPoint</b>Slides</span><span><b>Excel</b>Sheets</span><span><b>Teams</b>Chat + calls</span></div>
+      <div class="apps"><span><b>Word</b>Pages</span><span><b>Teams</b>Chat + calls</span></div>
     </div>
     <figure class="frame" aria-label="Live preview"><iframe id="hero-stage" title="Theme preview" tabindex="-1"></iframe><figcaption id="hero-name"></figcaption></figure>
   </section>
@@ -53,7 +53,7 @@ try { if (/[?&]host=office\b/.test(location.search)) sessionStorage.setItem("wt-
       <button class="tile" data-open="maker"><b>Your own theme <svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></b><span>Pick a picture or three colours. Theme your files with it, right here. Nothing is uploaded.</span></button>
       <button class="tile" data-open="maker" data-share="1"><b>Share with everyone <svg class="i" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg></b><span>Send it to the gallery. Pictures are checked and shrunk to under 2 MB, then approved by hand.</span></button>
       <a class="tile" href="studio.html"><b>File studio <svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></b><span>Open any themed file to check it's intact, change or tune its theme, restore it or take it out.</span></a>
-      <button class="tile" data-open="install"><b>Browser extension <svg class="i" viewBox="0 0 24 24"><path d="M12 5v10M7 11l5 5 5-5M5 19h14"/></svg></b><span>Live scenes around your page in Word, PowerPoint, Excel and Teams on the web.</span></button>
+      <button class="tile" data-open="install"><b>Browser extension <svg class="i" viewBox="0 0 24 24"><path d="M12 5v10M7 11l5 5 5-5M5 19h14"/></svg></b><span>Live scenes around your page in Word and Teams on the web.</span></button>
     </div>
   </section>
 </main>
@@ -68,7 +68,7 @@ try { if (/[?&]host=office\b/.test(location.search)) sessionStorage.setItem("wt-
   <iframe class="stage" title="Theme preview"></iframe>
   <p class="desc"></p>
   <h4>Save it into a file</h4>
-  <label class="drop"><input type="file" accept=".docx,.pptx,.xlsx"><b>Drop a Word, PowerPoint or Excel file</b><span>The themed copy downloads straight away. Your file never leaves this computer.</span></label>
+  <label class="drop"><input type="file" accept=".docx,.docm"><b>Drop a Word file</b><span>The themed copy downloads straight away. Your file never leaves this computer.</span></label>
   <p class="msg" role="status"></p>
   <div class="row wrap-row"><button class="btn btn-outline btn-sm" data-a="starter">Word starter</button><button class="btn btn-outline btn-sm" data-a="teams">Teams background</button><button class="btn btn-outline btn-sm" data-a="ext">Use in extension</button><a class="btn btn-ghost btn-sm" data-studio href="studio.html">Check or remove a theme…</a></div>
 </template>
@@ -78,14 +78,14 @@ try { if (/[?&]host=office\b/.test(location.search)) sessionStorage.setItem("wt-
   <a class="btn btn-primary btn-block" href="downloads/wild-themes-extension.zip" download><svg class="i" viewBox="0 0 24 24"><path d="M12 5v10M7 11l5 5 5-5M5 19h14"/></svg> Download the extension</a>
   <ol class="steps"><li>Unzip the download.</li><li>Open <span class="cmd"><code>chrome://extensions</code><button class="btn btn-ghost btn-xs copy" data-copy="chrome://extensions">Copy</button></span> and turn on <b>Developer mode</b>.</li><li>Click <b>Load unpacked</b> and choose the unzipped folder.</li></ol>
   <h4>Want it in its own app window?</h4>
-  <p class="fine">Open Teams, Word, PowerPoint or Excel on the web in Edge or Chrome, then <b>⋮ › Apps › Install this site as an app</b> (Chrome: <b>⋮ › Cast, save and share › Install page as app</b>). It opens in its own window with a taskbar icon, and the theme comes with it. Use the Teams app window for Teams on your PC: the same theme as in the browser, on every page.</p>
+  <p class="fine">Open Teams or Word on the web in Edge or Chrome, then <b>⋮ › Apps › Install this site as an app</b> (Chrome: <b>⋮ › Cast, save and share › Install page as app</b>). It opens in its own window with a taskbar icon, and the theme comes with it. Use the Teams app window for Teams on your PC: the same theme as in the browser, on every page.</p>
   <h4>Desktop Word on your PC</h4>
   <ol class="steps"><li>Theme your file here (drop it on a theme, or press <b>Word starter</b>) and open it in Word. The theme is inside the file.</li><li>For the scene around the page too, download and run <a href="https://github.com/Min3scon/Wild-Themes/releases/latest/download/WildThemes.exe">WildThemes.exe</a> (one file, nothing to install). It follows the open file's theme, so the page and the sides match.</li><li>Change or remove a theme in Word with the <a href="addin/manifest.xml" download>Office add-in</a>.</li></ol>
 </template>
 
 <template id="t-desktop">
-  <header class="dh"><h3 id="dlg-title">In the desktop apps</h3><p class="by">Word, PowerPoint, Excel and Teams on your computer.</p></header>
-  <h4>Word, PowerPoint and Excel: it's in the file</h4>
+  <header class="dh"><h3 id="dlg-title">In the desktop apps</h3><p class="by">Word and Teams on your computer.</p></header>
+  <h4>Word: it's in the file</h4>
   <ol class="steps"><li>Open a theme above and drop your file on it (or press <b>Word starter</b>).</li><li>Open the downloaded file in the desktop app. The scene, colours, fonts and styles are inside the file, so it looks themed with nothing installed.</li><li>Send it or hand it in: whoever opens it sees the theme too, in the desktop apps, on the web and in Teams.</li></ol>
   <h4>The scene around the page in desktop Word</h4>
   <ol class="steps"><li>Download <a href="https://github.com/Min3scon/Wild-Themes/releases/latest/download/WildThemes.exe">WildThemes.exe</a> (Windows, one file, nothing to install).</li><li>Run <b>WildThemes.exe</b>. It lays the animated scene over Word's grey area around the page, like the extension on the web. Clicks go straight through to Word.</li><li>Pick a scene or quit from its icon by the clock.</li></ol>
@@ -104,7 +104,7 @@ try { if (/[?&]host=office\b/.test(location.search)) sessionStorage.setItem("wt-
     <select id="m-fx" aria-label="Effect"><option value="none">No effect</option><option value="stars">Twinkling stars</option><option value="snow">Snow</option><option value="bubbles">Bubbles</option><option value="confetti">Confetti</option></select></div>
   <iframe class="stage" id="m-stage" title="Your theme preview"></iframe>
   <p class="msg" id="m-msg" role="status"></p>
-  <label class="drop" id="m-drop"><input type="file" accept=".docx,.pptx,.xlsx"><b>Drop a file to theme it</b><span>Word, PowerPoint or Excel. Downloads straight away.</span></label>
+  <label class="drop" id="m-drop"><input type="file" accept=".docx,.docm"><b>Drop a file to theme it</b><span>A Word file. Downloads straight away.</span></label>
   <div class="row wrap-row"><button class="btn btn-outline btn-sm" id="m-ext">Use in extension</button><button class="btn btn-outline btn-sm" id="m-teams">Teams background</button></div>
   <div class="share" id="m-share">
     <h4>Share with everyone</h4>

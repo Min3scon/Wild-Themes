@@ -147,7 +147,7 @@ async function stillify(a) {                             // Still: first frame a
 // Same core as the extension and the add-in: the file gets the full embedded definition, backup and checks.
 async function themeFile(t, file, say) {
   if (!file) return;
-  if (!/\.(docx|docm|pptx|pptm|xlsx|xlsm)$/i.test(file.name)) return say("Use a .docx, .pptx or .xlsx file.", "bad");
+  if (!/\.(docx|docm)$/i.test(file.name)) return say("Use a Word file (.docx).", "bad");
   say("Adding the theme…");
   try {
     await loadTools();
@@ -204,8 +204,11 @@ const actions = {
     save(await WWAssets.teams(th, EXT, img), `${t.name} (Teams).jpg`, "image/jpeg"); say("Saved. In a Teams meeting: Video effects › Add new.", "ok");
   },
   async ext(t, say) {
+    // Wild Themes for Word (the desktop .exe) listens on this PC only; it takes built-in scenes.
+    const desk = t.kind === "builtin" ? fetch(`http://127.0.0.1:47615/theme?id=${encodeURIComponent(t.id)}`).then(() => true, () => false) : Promise.resolve(false);
     // With the extension installed, its site bridge switches the theme right away.
     if (!document.documentElement.dataset.wildThemesExtension) {
+      if (await desk) return say(`Done. Desktop Word now shows ${t.name} around the page.`, "ok");
       say("Add the extension first, then press this again.", "bad");
       return setTimeout(openInstall, 900);
     }
