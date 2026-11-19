@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>File studio · Wild Themes</title>
-<meta name="description" content="Check, change, configure, restore or remove the theme saved inside a Word, PowerPoint or Excel file. Runs in your browser; nothing is uploaded.">
+<meta name="description" content="Check, change, configure, restore or remove the theme saved inside a Word file. Runs in your browser; nothing is uploaded.">
 <link rel="icon" href="extension/icons/icon32.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono&family=Outfit:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="site.css">
-<script>/* As the Office add-in, these same pages run inside Word, PowerPoint and Excel (addin/office-host.js). */
+<script>/* As the Office add-in, these same pages run inside Word (addin/office-host.js). */
 try { if (/[?&]host=office\b/.test(location.search)) sessionStorage.setItem("wt-host", "office");
   if (sessionStorage.getItem("wt-host") === "office") document.write('<script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"><\/script><script src="addin/office-host.js"><\/script>'); } catch (_) {}</script>
 </head>
@@ -23,9 +23,9 @@ try { if (/[?&]host=office\b/.test(location.search)) sessionStorage.setItem("wt-
 
 <main class="wrap section">
   <h1 class="display-2">File studio</h1>
-  <p class="sub">Open a Word, PowerPoint or Excel file to see the theme saved inside it, check it's intact, change it, tune it, restore it or take it out. Everything happens in this browser tab: your file is never uploaded.</p>
+  <p class="sub">Open a Word file to see the theme saved inside it, check it's intact, change it, tune it, restore it or take it out. Everything happens in this browser tab: your file is never uploaded.</p>
 
-  <label class="drop st-drop" id="drop"><input type="file" accept=".docx,.docm,.pptx,.pptm,.xlsx,.xlsm"><b>Open or drop a file</b><span>.docx, .pptx or .xlsx (macro-enabled files too)</span></label>
+  <label class="drop st-drop" id="drop"><input type="file" accept=".docx,.docm"><b>Open or drop a file</b><span>.docx (macro-enabled .docm too)</span></label>
 
   <section class="st-file" id="file" hidden aria-live="polite">
     <div class="st-head"><span class="st-sw" id="sw" aria-hidden="true"></span>
