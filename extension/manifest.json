@@ -53,6 +53,15 @@
       ],
       "all_frames": true,
       "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://min3scon.github.io/Wild-Themes/*"
+      ],
+      "js": [
+        "site-bridge.js"
+      ],
+      "run_at": "document_start"
     }
   ],
   "host_permissions": [
