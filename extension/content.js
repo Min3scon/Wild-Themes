@@ -7,7 +7,7 @@
   // Which app? Word and PowerPoint have a page/slide on a canvas; Excel and Teams have panes.
   const app = /\/we\//i.test(P) || HN == "word.cloud.microsoft" ? "doc"
     : /\/p\//i.test(P) || HN == "powerpoint.cloud.microsoft" ? "doc"
-    : /\/x\//i.test(P) || HN == "excel.cloud.microsoft" || /^teams\./.test(HN) ? "pane" : "";
+    : /\/x\//i.test(P) || HN == "excel.cloud.microsoft" || /^teams\./.test(HN) || HN == "assignments.edu.cloud.microsoft" ? "pane" : "";   // Assignments: its own site, in a frame inside Teams
   if (window.__ww || !app || innerWidth < 300) return;
   window.__ww = 1;
   const T = self.WW_THEMES, DEF = { on: true, theme: "synthwave", motion: "auto", sparks: true, docs: {} };
@@ -120,7 +120,7 @@
   // look because the page behind is painted in the app's own background colour.
   function scanPane() {
     // Teams v2 has no role=main; its chat/channel area is app-layout-area--main
-    const root = D.querySelector('[data-tid="app-layout-area--main"]') || D.querySelector("[role=main]"), rr = root && root.getBoundingClientRect();
+    const root = D.querySelector('[data-tid="app-layout-area--main"]') || D.querySelector("[role=main]") || (HN.startsWith("assignments.") ? D.body : null), rr = root && root.getBoundingClientRect();
     if (!rr || rr.width * rr.height < 1e5) return;
     let shell = "";
     for (let a = root.parentElement; a && a != D.body && a != H_; a = a.parentElement) {
@@ -134,7 +134,7 @@
     if (shell) H_.style.setProperty("--ww-base", shell, "important");
     // a see-through veil in the pane's own colour keeps text readable that has no card behind it
     const own = getComputedStyle(root).backgroundColor, m = own.match(/\d+(\.\d+)?/g);
-    if (m && !root.hasAttribute("data-ww-clear") && solid(root)) bg.style.setProperty("--ww-veil", `rgba(${m[0]},${m[1]},${m[2]},${HN.includes("teams") ? .45 : .8})`);
+    if (m && !root.hasAttribute("data-ww-clear") && solid(root)) bg.style.setProperty("--ww-veil", `rgba(${m[0]},${m[1]},${m[2]},${HN.includes("teams") || HN.startsWith("assignments.") ? .45 : .8})`);
     const big = rr.width * rr.height * .45;
     for (let i = 0; i < 16; i++) {
       for (const n of D.elementsFromPoint(rr.left + rr.width * ((i % 4) + .5) / 4, rr.top + rr.height * ((i >> 2) + .5) / 4)) {

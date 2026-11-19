@@ -43,7 +43,8 @@
         "https://excel.cloud.microsoft/*",
         "https://teams.microsoft.com/*",
         "https://teams.live.com/*",
-        "https://teams.cloud.microsoft/*"
+        "https://teams.cloud.microsoft/*",
+        "https://assignments.edu.cloud.microsoft/*"
       ],
       "js": [
         "lib/themes.js",
@@ -73,6 +74,7 @@
     "https://teams.microsoft.com/*",
     "https://teams.live.com/*",
     "https://teams.cloud.microsoft/*",
+    "https://assignments.edu.cloud.microsoft/*",
     "https://min3scon.github.io/*",
     "http://127.0.0.1:47615/*"
   ]
