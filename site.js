@@ -315,5 +315,7 @@ function openMaker(share) {
   if (share) setTimeout(() => $("#m-share", body).scrollIntoView({ block: "nearest" }), 50);
 }
 
-$$("[data-open]").forEach((b) => b.onclick = () => b.dataset.open === "install" ? openInstall() : openMaker(!!b.dataset.share));
+const opener = (b) => b.dataset.open === "install" ? openInstall() : b.dataset.open === "desktop" ? openDesktop() : openMaker(!!b.dataset.share);
+$$("[data-open]").forEach((b) => b.onclick = () => opener(b));
+function openDesktop() { $$("[data-open]", openDialog("#t-desktop")).forEach((b) => b.onclick = () => opener(b)); }
 render(); hero();
