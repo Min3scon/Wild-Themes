@@ -1,0 +1,12 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<!-- The extension's own scene CSS, so the grey space around Word's page matches Word on the web 1:1. -->
+<link rel="stylesheet" href="content.css"><link rel="stylesheet" id="s">
+<style>html,body{margin:0;height:100%;overflow:hidden;background:#000}</style></head>
+<body><div id="ww-bg"><i></i><i></i><i></i><i></i></div>
+<script>
+const q = new URLSearchParams(location.search), id = q.get("id") || "synthwave", bg = document.getElementById("ww-bg");
+document.getElementById("s").href = "scenes/" + id + ".css";
+bg.dataset.scene = id;
+if (q.get("dark") === "1") { bg.classList.add("veil"); bg.style.setProperty("--ww-veil", "rgba(0,0,0,.42)"); }
+</script></body></html>

@@ -31,28 +31,12 @@ class Scene : Form
     [DllImport("user32.dll")] static extern bool IsWindowVisible(IntPtr h);
     [DllImport("user32.dll")] static extern bool PrintWindow(IntPtr h, IntPtr dc, uint flags);
     [DllImport("user32.dll")] static extern IntPtr SetWindowLongPtr(IntPtr h, int i, IntPtr v);
-    [DllImport("user32.dll")] static extern bool SetLayeredWindowAttributes(IntPtr h, uint key, byte alpha, uint flags);
     [StructLayout(LayoutKind.Sequential)] struct RECT { public int L, T, R, B; }
     const int GWLP_HWNDPARENT = -8;
 
-    // own GIF player: browsers play frames of 10 ms or less at 100 ms, so the scene runs at the web speed
-    Image gif; int frame, frames; int[] delays = { 100 };
-    readonly Timer anim = new();
-    bool dark = Settings.Get("dark", "1") == "1";
-    protected override void OnPaint(PaintEventArgs e)
-    {
-        if (gif == null) return;
-        e.Graphics.DrawImage(gif, ClientRectangle);
-        if (dark) using (var b = new SolidBrush(Color.FromArgb(110, 0, 0, 0))) e.Graphics.FillRectangle(b, ClientRectangle);
-    }
-    void Next()
-    {
-        if (gif == null || frames < 2) return;
-        frame = (frame + 1) % frames;
-        gif.SelectActiveFrame(System.Drawing.Imaging.FrameDimension.Time, frame);
-        anim.Interval = delays[frame];
-        Invalidate();
-    }
+    // The extension's own CSS scene in WebView2 (Edge), so the grey space matches Word on the web 1:1.
+    readonly Microsoft.Web.WebView2.WinForms.WebView2 web = new() { Dock = DockStyle.Fill, DefaultBackgroundColor = Color.Black };
+    bool dark = Settings.Get("dark", "1") == "1", ready; string scene;
     readonly Timer tick = new() { Interval = 250 };
     readonly NotifyIcon tray = new() { Visible = true, Text = "Wild Themes for Word" };
     readonly string dir = Path.Combine(AppContext.BaseDirectory, "scenes");
@@ -61,43 +45,47 @@ class Scene : Form
     public Scene()
     {
         FormBorderStyle = FormBorderStyle.None; ShowInTaskbar = false; StartPosition = FormStartPosition.Manual;
-        BackColor = Color.Black; DoubleBuffered = true;
-        anim.Tick += (_, _) => Next(); anim.Start();
+        BackColor = Color.Black; Controls.Add(web);
         tray.Icon = SystemIcons.Application;
         var menu = new ContextMenuStrip();
-        foreach (var f in Directory.GetFiles(dir, "*.gif").OrderBy(x => x)) { var id = Path.GetFileNameWithoutExtension(f); menu.Items.Add(id, null, (_, _) => Use(id)); }
+        foreach (var f in Directory.GetFiles(dir, "*.css").OrderBy(x => x)) { var id = Path.GetFileNameWithoutExtension(f); menu.Items.Add(id, null, (_, _) => Use(id)); }
         menu.Items.Add(new ToolStripSeparator());
         var dm = new ToolStripMenuItem("Dark mode") { Checked = dark, CheckOnClick = true };
-        dm.CheckedChanged += (_, _) => { dark = dm.Checked; Settings.Set("dark", dark ? "1" : "0"); Invalidate(); };
+        dm.CheckedChanged += (_, _) => { dark = dm.Checked; Settings.Set("dark", dark ? "1" : "0"); Play(scene); };
         menu.Items.Add(dm);
         menu.Items.Add("Quit", null, (_, _) => Close());
         tray.ContextMenuStrip = menu;
-        Use(Settings.Get("scene", "synthwave"));
+        Init();
         Listen();
         tick.Tick += (_, _) => Follow();
         tick.Start();
     }
 
-    // click-through, never takes focus, no taskbar button
-    protected override CreateParams CreateParams { get { var p = base.CreateParams; p.ExStyle |= 0x80000 | 0x20 | 0x80 | 0x08000000; return p; } }
+    async void Init()
+    {
+        var env = await Microsoft.Web.WebView2.Core.CoreWebView2Environment.CreateAsync(null,
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WildThemes", "webview"));
+        await web.EnsureCoreWebView2Async(env);
+        web.CoreWebView2.SetVirtualHostNameToFolderMapping("wildthemes.local", AppContext.BaseDirectory, Microsoft.Web.WebView2.Core.CoreWebView2HostResourceAccessKind.Allow);
+        web.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
+        ready = true;
+        Use(Settings.Get("scene", "synthwave"));
+    }
+
+    // never takes focus, no taskbar button
+    protected override CreateParams CreateParams { get { var p = base.CreateParams; p.ExStyle |= 0x80 | 0x08000000; return p; } }
     protected override bool ShowWithoutActivation => true;
-    protected override void OnHandleCreated(EventArgs e) { base.OnHandleCreated(e); SetLayeredWindowAttributes(Handle, 0, 255, 2); }
 
     void Use(string id, bool remember = true)
     {
-        var f = Path.Combine(dir, id + ".gif");
-        if (!File.Exists(f)) return;
-        var old = gif; gif = Image.FromFile(f); old?.Dispose();
-        frames = gif.GetFrameCount(System.Drawing.Imaging.FrameDimension.Time); frame = 0;
-        try
-        {
-            var raw = gif.GetPropertyItem(0x5100).Value;   // frame delays, 1/100 s each
-            delays = Enumerable.Range(0, frames).Select(i => { var d = BitConverter.ToInt32(raw, i * 4) * 10; return d <= 10 ? 100 : d; }).ToArray();
-        }
-        catch { delays = Enumerable.Repeat(100, Math.Max(1, frames)).ToArray(); }
-        anim.Interval = delays[0];
-        Invalidate();
+        if (!File.Exists(Path.Combine(dir, id + ".css"))) return;
         if (remember) Settings.Set("scene", id);
+        Play(id);
+    }
+    void Play(string id)
+    {
+        scene = id;
+        if (ready && id != null) web.CoreWebView2.Navigate($"https://wildthemes.local/scene.html?id={id}&dark={(dark ? 1 : 0)}");
     }
 
     [DllImport("ole32.dll", CharSet = CharSet.Unicode)] static extern int CLSIDFromProgID(string p, out Guid g);
@@ -112,7 +100,7 @@ class Scene : Form
             if (GetActiveObject(ref g, IntPtr.Zero, out var o) != 0) return;
             dynamic app = o;
             string id = app.ActiveDocument.CustomDocumentProperties.Item("WildTheme").Value;
-            if (id != fileScene && File.Exists(Path.Combine(dir, id + ".gif"))) { fileScene = id; Use(id, false); }
+            if (id != fileScene && File.Exists(Path.Combine(dir, id + ".css"))) { fileScene = id; Use(id, false); }
             return;
         }
         catch { /* no document or no theme in it */ }
@@ -133,7 +121,7 @@ class Scene : Form
                     using var c = l.AcceptTcpClient(); using var s = c.GetStream();
                     var buf = new byte[2048]; var line = Encoding.ASCII.GetString(buf, 0, s.Read(buf, 0, buf.Length)).Split('\n')[0];
                     var m = System.Text.RegularExpressions.Regex.Match(line, @"GET /theme\?id=([a-z0-9-]*)");
-                    if (m.Success && File.Exists(Path.Combine(dir, m.Groups[1].Value + ".gif")))
+                    if (m.Success && File.Exists(Path.Combine(dir, m.Groups[1].Value + ".css")))
                         BeginInvoke(() => { Settings.Set("scene", m.Groups[1].Value); if (fileScene == null) Use(m.Groups[1].Value); });
                     var ok = Encoding.ASCII.GetBytes("HTTP/1.1 204 No Content\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n");
                     s.Write(ok, 0, ok.Length);
