@@ -1005,7 +1005,7 @@
       p(`This document has the ${name} theme built into the file. The backdrop, colours and fonts travel with it, so anyone who opens it sees the same look, with no extensions or add-ins needed.`),
       bullet("Type over this text, or delete it all and start fresh."),
       bullet("Use the Styles gallery on the Home tab for headings, quotes and lists in the theme’s colours."),
-      bullet("An animated backdrop plays in the Word desktop app. Word for the web may show it as a still picture; the text stays readable either way."),
+      bullet("The backdrop sits behind every page, so your text always stays on a clean, readable panel."),
       p("A pull quote", "Heading2"),
       p("Make it bold. Make it weird. Keep it readable.", "Quote"),
       p("Notes", "Heading2"),

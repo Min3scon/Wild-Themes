@@ -82,9 +82,17 @@
   // One place that knows which stamper and which pictures each file type needs.
   const kindOf = (name) => (/\.pptx$/i.test(name) ? "pptx" : /\.xlsx$/i.test(name) ? "xlsx" : "docx");
   const stamperFor = (kind) => ({ docx: self.WWStamper, pptx: self.WWStamperPptx, xlsx: self.WWStamperXlsx })[kind];
+  // Word plays an animated GIF as a video, drawn ON TOP of the text with a play button,
+  // whatever its wrap setting. So Word files always get the scene's first frame as a JPEG.
+  async function stillJpeg(b) {
+    const img = await createImageBitmap(new Blob([b.bytes], { type: "image/gif" }));
+    const c = cv(img.width, img.height); c.getContext("2d").drawImage(img, 0, 0);
+    return { bytes: await bytesOf(c, "image/jpeg", .88), ext: "jpeg" };
+  }
   async function assetsFor(t, kind, sec, base, imageB64) {
-    const S = stamperFor(kind);
-    return { backdrop: await backdrop(t, sec, base, imageB64, kind),
+    let bd = await backdrop(t, sec, base, imageB64, kind);
+    if (kind == "docx" && bd.ext == "gif") bd = await stillJpeg(bd);
+    return { backdrop: bd,
       panel: kind == "xlsx" ? null : async (_s, rect) => (await panel(t, rect, kind == "pptx" ? .9 : 1)).bytes };
   }
 
