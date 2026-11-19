@@ -55,3 +55,12 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
   sync().catch(() => {});
   if (reason == "install") chrome.tabs.create({ url: chrome.runtime.getURL("options.html#file") });
 });
+
+// Wild Themes for Word (desktop app) listens on this PC only; tell it the chosen theme so desktop
+// Word matches the browser. Nothing happens when the app isn't running.
+const tellDesktop = () => chrome.storage.sync.get({ theme: "", on: true }, (v) => {
+  fetch(`http://127.0.0.1:47615/theme?id=${encodeURIComponent(v.on ? v.theme : "")}`).catch(() => {});
+});
+chrome.storage.onChanged.addListener((c, area) => { if (area === "sync" && (c.theme || c.on)) tellDesktop(); });
+chrome.runtime.onStartup.addListener(tellDesktop);
+chrome.runtime.onInstalled.addListener(tellDesktop);
