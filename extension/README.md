@@ -41,6 +41,6 @@ Three parts that work together:
 ## Good to know
 
 - It's unofficial and reads each web app's page layout, which Microsoft can change. If the scene stops showing, the safe behaviour is that the app just looks normal.
-- Browser extensions can't run inside the Word, PowerPoint, Excel or Teams desktop apps. On the desktop, themes come from the files themselves (and the add-in).
+- Browser extensions can't run inside the Word, PowerPoint, Excel or Teams desktop apps, and Microsoft doesn't let anything else restyle them. For an app-like window with the theme, install the web version as an app: in Edge, ⋮ › Apps › Install this site as an app; in Chrome, ⋮ › Cast, save and share › Install page as app. Extensions run inside those windows. On the desktop apps, themes come from the files themselves (and the add-in).
 - Typing sparks are a small fixed set of dots reused over and over; turn them off in the popup if you like.
 - Privacy: it runs only on Word, PowerPoint, Excel and Teams on the web, sends nothing anywhere, and stores your choices in your browser's extension storage. Documents are identified by a short code made from the file's address, never the address itself.
