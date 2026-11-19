@@ -140,6 +140,8 @@
       for (const n of D.elementsFromPoint(rr.left + rr.width * ((i % 4) + .5) / 4, rr.top + rr.height * ((i >> 2) + .5) / 4)) {
         if (!ok(n) || !(n == root || root.contains(n))) continue;
         const r = n.getBoundingClientRect();
+        // never a message, post or list item (a long post is big too): only the area's own layers
+        if (n.closest("li,[role=listitem],[role=article],[data-tid=channel-pane-message],[data-tid=chat-pane-message],[data-tid=chat-pane-item]")) continue;
         if (r.width * r.height >= big && (n.hasAttribute("data-ww-clear") || solid(n))) ATTR(n, "data-ww-clear", "");
       }
     }
@@ -231,6 +233,8 @@
   addEventListener("pointerdown", (e) => { ptr = [e.clientX, e.clientY]; }, { capture: true, passive: true });
   addEventListener("resize", () => later(300), { passive: true });
   addEventListener("scroll", () => later(400), { capture: true, passive: true });
+  // Teams and Word swap whole panes without reloading (new chat, channel, tab): look again right away
+  new MutationObserver(() => later(60)).observe(D.documentElement, { childList: true, subtree: true });
   chrome.runtime.onMessage.addListener((m, _, reply) => { m == "ww-status" && reply({ docKey: key, active: id, file }); });
 
   const load = () => chrome.storage.sync.get(DEF, (v) => chrome.storage.local.get(["customs", "community", "remote"], (c) => {
@@ -244,6 +248,11 @@
   }));
   chrome.storage.onChanged.addListener(load);
   load();
+  // Wild Themes for Word and Teams (the desktop .exe), when it's running, says which theme is on:
+  // use the same one, so the browser, Teams and Word all match.
+  fetch("http://127.0.0.1:47615/current").then((r) => r.json()).then((j) => chrome.storage.sync.get(DEF, (v) => {
+    if (j.theme && T[j.theme] && j.theme !== v.theme) chrome.storage.sync.set({ theme: j.theme, on: true });
+  })).catch(() => { /* app not running */ });
   [250, 600, 1200, 2000, 3500].forEach((ms) => setTimeout(probe, ms));
   setTimeout(() => probe(true), 5000);                              // no file theme by now: use the default
   [800, 2500, 6000].forEach((ms) => setTimeout(scan, ms));         // Word builds its page in stages

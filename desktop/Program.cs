@@ -89,7 +89,7 @@ class Host : ApplicationContext
     public Host()
     {
         ui.CreateControl();
-        tray.Icon = SystemIcons.Application;
+        try { tray.Icon = Icon.FromHandle(new Bitmap(Path.Combine(AppContext.BaseDirectory, "ext", "icons", "icon32.png")).GetHicon()); } catch { tray.Icon = SystemIcons.Application; }
         var menu = new ContextMenuStrip();
         var themes = new ToolStripMenuItem("Theme");
         menu.Items.Add(themes);
@@ -102,13 +102,19 @@ class Host : ApplicationContext
         Toggle(menu, "Dark mode", State.Dark, v => { State.Dark = v; Settings.Set("dark", v ? "1" : "0"); Refresh(); });
         Toggle(menu, "Animated", State.Animated, v => { State.Animated = v; Settings.Set("animated", v ? "1" : "0"); Refresh(); });
         Toggle(menu, "Theme in Word", State.Word, v => { State.Word = v; Settings.Set("word", v ? "1" : "0"); if (!v) Win.WordScrollBars(true); Find(); });
-        Toggle(menu, "Theme in Teams (rough)", State.Teams, v => { State.Teams = v; Settings.Set("teams", v ? "1" : "0"); Find(); });
         Toggle(menu, "Sparks when typing", State.Sparks, v => { State.Sparks = v; Settings.Set("sparks", v ? "1" : "0"); });
         // runs from sign-in by default, so the scene is there whenever Word or Teams opens
         var run = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run");
         if (Settings.Get("autostart", "1") == "1") run.SetValue("WildThemes", $"\"{Environment.ProcessPath}\"");
         Toggle(menu, "Start with Windows", Settings.Get("autostart", "1") == "1", v => { Settings.Set("autostart", v ? "1" : "0"); if (v) run.SetValue("WildThemes", $"\"{Environment.ProcessPath}\""); else run.DeleteValue("WildThemes", false); });
+        menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add("Open Teams (themed)", null, (_, _) => AppWindow.Open("teams"));
+        menu.Items.Add("Open Word online (themed)", null, (_, _) => AppWindow.Open("word"));
+        menu.Items.Add("Choose a theme (website)", null, (_, _) => AppWindow.Open("site"));
         menu.Items.Add("Quit", null, (_, _) => Quit());
+        // WildThemes.exe --open teams|word|site: straight into a themed window (for shortcuts)
+        var args = Environment.GetCommandLineArgs();
+        int oi = Array.IndexOf(args, "--open"); if (oi > 0 && oi + 1 < args.Length) AppWindow.Open(args[oi + 1]);
         tray.ContextMenuStrip = menu;
         Use(Settings.Get("scene", "synthwave"));
         Listen();
@@ -137,7 +143,7 @@ class Host : ApplicationContext
     {
         if (n++ % 4 == 0) FromDocument();
         var seen = new HashSet<IntPtr>();
-        Win.EnumWindows((h, _) => { if (Win.IsWindowVisible(h) && ((State.Word && Win.IsWord(h)) || (State.Teams && Win.IsTeams(h)))) seen.Add(h); return true; }, IntPtr.Zero);
+        Win.EnumWindows((h, _) => { if (Win.IsWindowVisible(h) && State.Word && Win.IsWord(h)) seen.Add(h); return true; }, IntPtr.Zero);
         foreach (var h in seen) if (!layers.ContainsKey(h)) layers[h] = new Layer(h);
         foreach (var h in layers.Keys.Where(k => !seen.Contains(k) || !Win.IsWindow(k)).ToList()) { layers[h].Close(); layers.Remove(h); }
     }
@@ -168,6 +174,11 @@ class Host : ApplicationContext
                 {
                     using var c = l.AcceptTcpClient(); using var s = c.GetStream();
                     var buf = new byte[2048]; var line = Encoding.ASCII.GetString(buf, 0, s.Read(buf, 0, buf.Length)).Split('\n')[0];
+                    if (line.StartsWith("GET /current"))   // the extension asks which theme is on, so every window matches
+                    {
+                        var j = Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Private-Network: true\r\nConnection: close\r\n\r\n{\"theme\":\"" + State.Scene + "\"}");
+                        s.Write(j, 0, j.Length); continue;
+                    }
                     var m = System.Text.RegularExpressions.Regex.Match(line, @"GET /theme\?id=([a-z0-9-]*)");
                     if (m.Success) ui.BeginInvoke(() => { if (!Known(m.Groups[1].Value)) return; Settings.Set("scene", m.Groups[1].Value); if (fileScene == null) Use(m.Groups[1].Value); });
                     var ok = Encoding.ASCII.GetBytes("HTTP/1.1 204 No Content\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Private-Network: true\r\nAccess-Control-Allow-Methods: GET\r\nConnection: close\r\n\r\n");
@@ -258,6 +269,60 @@ class Layer : Form
         if (region == null) { if (Visible) Hide(); return; }
         Region = region;
         if (!Visible && !Win.IsIconic(target)) Show();
+    }
+}
+
+// Teams or Word on the web in the app's own window, with the Wild Themes browser extension inside
+// it: the same theme as in Chrome, on every page, done properly from inside the page (no guessing
+// from colours). Nothing to install; sign in once and it remembers you.
+class AppWindow : Form
+{
+    static readonly Dictionary<string, (string title, string url)> Apps = new()
+    {
+        ["teams"] = ("Teams", "https://teams.microsoft.com/v2/"),
+        ["word"] = ("Word", "https://www.office.com/launch/word"),
+        ["site"] = ("Wild Themes", Themes.Site),
+    };
+    public static void Open(string which) { if (Apps.TryGetValue(which, out var a)) new AppWindow(a.title, a.url).Show(); }
+    static void Debug(string s) { var d = Environment.GetEnvironmentVariable("WILDTHEMES_DEBUG"); if (d != null) try { File.AppendAllText(Path.Combine(d, "log.txt"), DateTime.Now.ToString("T") + " " + s + Environment.NewLine); } catch { } }
+
+    readonly Microsoft.Web.WebView2.WinForms.WebView2 web = new() { Dock = DockStyle.Fill };
+    AppWindow(string title, string url)
+    {
+        Text = title + " · Wild Themes"; Width = 1400; Height = 900; StartPosition = FormStartPosition.CenterScreen; Icon = SystemIcons.Application;
+        Controls.Add(web); Init(url);
+    }
+    async void Init(string url)
+    {
+        var opts = new Microsoft.Web.WebView2.Core.CoreWebView2EnvironmentOptions { AreBrowserExtensionsEnabled = true, AllowSingleSignOnUsingOSPrimaryAccount = true };
+        var env = await Microsoft.Web.WebView2.Core.CoreWebView2Environment.CreateAsync(null,
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WildThemes", "apps"), opts);
+        await web.EnsureCoreWebView2Async(env);
+        try
+        {   // the copy inside this .exe, fresh each start (updates come with the app)
+            foreach (var x in await web.CoreWebView2.Profile.GetBrowserExtensionsAsync()) if (x.Name.Contains("Wild Themes")) await x.RemoveAsync();
+            await web.CoreWebView2.Profile.AddBrowserExtensionAsync(Path.Combine(AppContext.BaseDirectory, "ext"));
+        }
+        catch (Exception e) { Debug("extension: " + e.Message); /* older WebView2: the page still works, unthemed */ }
+        web.CoreWebView2.DocumentTitleChanged += (_, _) => Text = web.CoreWebView2.DocumentTitle;
+        // WILDTHEMES_DEBUG=folder: write what was loaded and a picture of the page, for checking
+        var dbg = Environment.GetEnvironmentVariable("WILDTHEMES_DEBUG");
+        if (dbg != null) web.CoreWebView2.NavigationCompleted += async (_, _) =>
+        {
+            await System.Threading.Tasks.Task.Delay(9000);
+            try
+            {
+                var exts = string.Join(", ", (await web.CoreWebView2.Profile.GetBrowserExtensionsAsync()).Select(x => x.Name + (x.IsEnabled ? "" : " (off)")));
+                var ww = await web.CoreWebView2.ExecuteScriptAsync("document.documentElement.dataset.ww || ''");
+                var probe = Path.Combine(dbg, "probe.js");
+                if (File.Exists(probe)) Debug("probe: " + await web.CoreWebView2.ExecuteScriptAsync(File.ReadAllText(probe)));
+                Debug($"{web.CoreWebView2.Source} | extensions: {exts} | data-ww={ww}");
+                using var f = File.Create(Path.Combine(dbg, "appwindow.png"));
+                await web.CoreWebView2.CapturePreviewAsync(Microsoft.Web.WebView2.Core.CoreWebView2CapturePreviewImageFormat.Png, f);
+            }
+            catch (Exception e) { Debug("capture: " + e.Message); }
+        };
+        web.CoreWebView2.Navigate(url);
     }
 }
 
