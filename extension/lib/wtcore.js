@@ -55,7 +55,7 @@
   // Every switch the tools offer. Each format supports a subset (FEATURES); the rest are ignored.
   const SETTINGS = {
     backdrop: { type: "bool", def: true, label: "Scene picture", tip: "The theme's scene behind the page, slide or sheet." },
-    panel: { type: "range", def: 100, min: 60, max: 100, label: "Reading panel", tip: "How solid the light panel behind the text is." },
+    panel: { type: "range", def: 100, min: 0, max: 100, label: "Reading panel", tip: "How solid the light panel behind the text is (0 = none: the scene fills the page)." },
     styles: { type: "bool", def: true, label: "Text styles", tip: "Title, headings, quotes, links and cell styles in the theme's colours and fonts." },
     tables: { type: "bool", def: true, label: "Tables", tip: "Table borders, header rows and banding in the theme's colours." },
     lists: { type: "bool", def: true, label: "Bullets and numbering", tip: "Bullet and number colours follow the theme." },
@@ -71,14 +71,14 @@
     pptx: ["backdrop", "panel", "styles", "tables", "direct", "animated", "transition"],
     xlsx: ["backdrop", "styles", "tables", "direct", "tabs"],
   };
-  const KIND_DEFAULTS = { pptx: { panel: 90 } };
+  const KIND_DEFAULTS = { pptx: { panel: 90 }, docx: { panel: 0 } };   // Word: one scene per page, like the web
   function settingsFor(kind, given) {
     const out = {};
     for (const k of FEATURES[kind] || []) {
       const spec = SETTINGS[k];
       let v = given && given[k] !== undefined ? given[k] : (KIND_DEFAULTS[kind] || {})[k] !== undefined ? KIND_DEFAULTS[kind][k] : spec.def;
       if (spec.type === "bool") v = v === true || v === "true" || v === 1;
-      else if (spec.type === "range") v = Math.max(spec.min, Math.min(spec.max, Math.round(Number(v) || spec.def)));
+      else if (spec.type === "range") v = Math.max(spec.min, Math.min(spec.max, Math.round(Number.isFinite(Number(v)) && v !== "" && v !== null ? Number(v) : spec.def)));
       else if (spec.type === "choice" && !spec.options.includes(v)) v = spec.def;
       out[k] = v;
     }

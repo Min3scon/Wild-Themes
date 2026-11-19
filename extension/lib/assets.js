@@ -76,7 +76,7 @@
     g.globalAlpha = alpha;
     g.fillStyle = (t.doc && t.doc.panel) || "#ffffff";
     g.beginPath(); g.roundRect(pad, pad, c.width - pad * 2, c.height - pad * 2, 18); g.fill();
-    g.globalAlpha = 1; g.shadowBlur = 0; g.lineWidth = 2; g.strokeStyle = t.accent || "#8a5cff"; g.stroke();
+    if (alpha > 0) { g.globalAlpha = 1; g.shadowBlur = 0; g.lineWidth = 2; g.strokeStyle = t.accent || "#8a5cff"; g.stroke(); }   // 0 = no panel at all
     return { bytes: await bytesOf(c, "image/png") };
   }
 
@@ -97,7 +97,7 @@
     if (s.backdrop === false) return { backdrop: null, panel: null };
     let bd = await backdrop(t, sec || { pageW: 11906, pageH: 16838 }, base, imageB64, kind);
     if (bd.ext == "gif" && (kind == "docx" || (kind == "pptx" && s.animated === false))) bd = await stillJpeg(bd);
-    const alpha = (s.panel || (kind == "pptx" ? 90 : 100)) / 100;
+    const alpha = (s.panel ?? (kind == "pptx" ? 90 : 100)) / 100;
     return { backdrop: bd, panel: kind == "xlsx" ? null : async (_s, rect) => (await panel(t, rect, alpha)).bytes };
   }
   // The picture-maker WTCore.apply() wants. imageFor(theme) returns a custom theme's picture (data URL) or null.

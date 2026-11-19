@@ -1372,7 +1372,10 @@
         const rels = await pkg.rels(path);
         const rId = rels.add(REL.image, relativeTarget(path, pPath));
         if (HIDE_SDT) ensureW15(hd);
-        insertLeadRun(hd, hd.documentElement, lockedSdt("WildTheme", nextSdtId(), pictureRun(panelAnchor(geom, rId, 2)), HIDE_SDT));
+        // the scene too: Word in dark mode drops the page background picture, which left pages 2+ black
+        const sceneRun = scene ? pictureRun(anchorXml({ id: nextId++, name: "WildThemeBackdrop", descr, title: "Wild Theme",
+          rId: rels.add(REL.image, relativeTarget(path, media.backdrop)), x: 0, y: 0, cx: geom.pageW * TWIP_EMU, cy: geom.pageH * TWIP_EMU, z: 1 })) : "";
+        insertLeadRun(hd, hd.documentElement, lockedSdt("WildTheme", nextSdtId(), sceneRun + pictureRun(panelAnchor(geom, rId, 2)), HIDE_SDT));
         pkg.touch(path);
         stats.headersStamped++;
       }

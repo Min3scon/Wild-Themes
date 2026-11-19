@@ -5,6 +5,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <Nullable>disable</Nullable>
     <AssemblyName>WildThemes</AssemblyName>
+    <Version>1.1.0</Version>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <!-- one .exe, nothing to install: .NET and the scenes are inside it -->
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
@@ -19,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <!-- the extension's own scenes, so desktop Word matches the web 1:1 -->
+    <None Include="..\extension\lib\themes.js" Link="themes.js" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Include="scene.html" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Include="..\extension\content.css" Link="content.css" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Include="..\extension\scenes\*.css" LinkBase="scenes" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
