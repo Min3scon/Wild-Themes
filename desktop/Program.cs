@@ -108,7 +108,14 @@ class Host : ApplicationContext
         var run = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run");
         if (Settings.Get("autostart", "1") == "1") run.SetValue("WildThemes", $"\"{Environment.ProcessPath}\"");
         Toggle(menu, "Start with Windows", Settings.Get("autostart", "1") == "1", v => { Settings.Set("autostart", v ? "1" : "0"); if (v) run.SetValue("WildThemes", $"\"{Environment.ProcessPath}\""); else run.DeleteValue("WildThemes", false); });
+        menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add("Open Teams (themed)", null, (_, _) => AppWindow.Open("teams"));
+        menu.Items.Add("Open Word online (themed)", null, (_, _) => AppWindow.Open("word"));
+        menu.Items.Add("Choose a theme (website)", null, (_, _) => AppWindow.Open("site"));
         menu.Items.Add("Quit", null, (_, _) => Quit());
+        // WildThemes.exe --open teams|word|site: straight into a themed window (for shortcuts)
+        var args = Environment.GetCommandLineArgs();
+        int oi = Array.IndexOf(args, "--open"); if (oi > 0 && oi + 1 < args.Length) AppWindow.Open(args[oi + 1]);
         tray.ContextMenuStrip = menu;
         Use(Settings.Get("scene", "synthwave"));
         Listen();
@@ -258,6 +265,42 @@ class Layer : Form
         if (region == null) { if (Visible) Hide(); return; }
         Region = region;
         if (!Visible && !Win.IsIconic(target)) Show();
+    }
+}
+
+// Teams or Word on the web in the app's own window, with the Wild Themes browser extension inside
+// it: the same theme as in Chrome, on every page, done properly from inside the page (no guessing
+// from colours). Nothing to install; sign in once and it remembers you.
+class AppWindow : Form
+{
+    static readonly Dictionary<string, (string title, string url)> Apps = new()
+    {
+        ["teams"] = ("Teams", "https://teams.microsoft.com/v2/"),
+        ["word"] = ("Word", "https://www.office.com/launch/word"),
+        ["site"] = ("Wild Themes", Themes.Site),
+    };
+    public static void Open(string which) { if (Apps.TryGetValue(which, out var a)) new AppWindow(a.title, a.url).Show(); }
+
+    readonly Microsoft.Web.WebView2.WinForms.WebView2 web = new() { Dock = DockStyle.Fill };
+    AppWindow(string title, string url)
+    {
+        Text = title + " · Wild Themes"; Width = 1400; Height = 900; StartPosition = FormStartPosition.CenterScreen; Icon = SystemIcons.Application;
+        Controls.Add(web); Init(url);
+    }
+    async void Init(string url)
+    {
+        var opts = new Microsoft.Web.WebView2.Core.CoreWebView2EnvironmentOptions { AreBrowserExtensionsEnabled = true, AllowSingleSignOnUsingOSPrimaryAccount = true };
+        var env = await Microsoft.Web.WebView2.Core.CoreWebView2Environment.CreateAsync(null,
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WildThemes", "apps"), opts);
+        await web.EnsureCoreWebView2Async(env);
+        try
+        {   // the copy inside this .exe, fresh each start (updates come with the app)
+            foreach (var x in await web.CoreWebView2.Profile.GetBrowserExtensionsAsync()) if (x.Name.Contains("Wild Themes")) await x.RemoveAsync();
+            await web.CoreWebView2.Profile.AddBrowserExtensionAsync(Path.Combine(AppContext.BaseDirectory, "ext"));
+        }
+        catch { /* older WebView2: the page still works, unthemed */ }
+        web.CoreWebView2.DocumentTitleChanged += (_, _) => Text = web.CoreWebView2.DocumentTitle;
+        web.CoreWebView2.Navigate(url);
     }
 }
 

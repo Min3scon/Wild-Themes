@@ -21,6 +21,8 @@
   <ItemGroup>
     <!-- the extension's own scenes, so desktop Word matches the web 1:1 -->
     <None Include="..\extension\lib\themes.js" Link="themes.js" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <!-- the whole browser extension, loaded into the app's own Teams window -->
+    <None Include="..\extension\**\*" LinkBase="ext" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Include="scene.html" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Include="..\extension\content.css" Link="content.css" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Include="..\extension\scenes\*.css" LinkBase="scenes" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
