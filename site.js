@@ -193,7 +193,10 @@ const sayer = (m) => (text, cls = "") => { m.textContent = text; m.className = "
 const actions = {
   async starter(t, say) {
     await loadTools(); const { th, img } = await forFiles(t);
-    const opened = await save(await WWStamper.newDocument(th, await stillify(await WWAssets.assetsFor(th, "docx", WWStamper.NEW_DOC_SECTION, EXT, img))), `${t.name}.docx`);
+    const blank = await WWStamper.newDocument(th, await stillify(await WWAssets.assetsFor(th, "docx", WWStamper.NEW_DOC_SECTION, EXT, img)));
+    // full core on top: definition, fingerprints and backup inside, like every other themed file
+    const doc = await WTCore.apply(new Uint8Array(await new Blob([blank]).arrayBuffer()), th, { animated: motion }, WWAssets.maker(EXT, async () => img), "Wild Themes website");
+    const opened = await save(doc, `${t.name}.docx`);
     say && say(opened ? `“${t.name}” opened as a new document.` : `Saved “${t.name}.docx”.`, "ok");
   },
   async teams(t, say) {
