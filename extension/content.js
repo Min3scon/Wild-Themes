@@ -42,8 +42,19 @@
   const still = () => S.motion == "off" || (S.motion == "auto" && (matchMedia("(prefers-reduced-motion:reduce)").matches ||
     navigator.hardwareConcurrency <= 2 || navigator.deviceMemory <= 2));
 
+  // Don't show anything until we know which theme applies: in Word/PowerPoint a theme saved in
+  // the file only shows up once the page is drawn, and showing the default first made it flash.
+  let ready = app == "pane", seen = 0;
+  function probe(last) {
+    if (ready) return;
+    file = readFile();
+    const editable = !!D.querySelector('[contenteditable="true"]');
+    if (file || (editable && seen) || last) { ready = true; apply(); }
+    seen = editable;
+  }
+
   function apply() {
-    const [nid, nt] = S.on ? pick() : [];
+    const [nid, nt] = S.on && (ready || (key && S.docs[key])) ? pick() : [];
     if (nid != id) {
       clear();
       if (!nid) return;
@@ -65,6 +76,7 @@
       H_.style.cssText += `;--ww-a:${t.accent};--ww-edge:${t.accent}88;--ww-glow:${t.accent}55;--ww-base:${t.custom ? t.colors && t.colors[0] : t.mode == "light" ? "#f3eefa" : "#08060f"}`;
       H_.dataset.ww = id;
     }
+    if (!bg) return;                                                // nothing shown yet (still waiting)
     bg.classList.toggle("still", still());
     scan();
   }
@@ -207,13 +219,16 @@
 
   const load = () => chrome.storage.sync.get(DEF, (v) => chrome.storage.local.get("customs", (c) => {
     S = { ...DEF, ...v };
+    const before = id && !T[id] && JSON.stringify(custom[id]);
     custom = {};
     (c.customs || []).forEach((x) => (custom[x.id] = { ...x, custom: 1 }));
-    if (id && !T[id]) clear();                                     // a custom theme may have changed
-    file = readFile();
+    if (before && before != JSON.stringify(custom[id])) clear();   // rebuild only if that custom theme changed
+    file = readFile() || file;
     apply();
   }));
   chrome.storage.onChanged.addListener(load);
   load();
+  [250, 600, 1200, 2000, 3500].forEach((ms) => setTimeout(probe, ms));
+  setTimeout(() => probe(true), 5000);                              // no file theme by now: use the default
   [800, 2500, 6000].forEach((ms) => setTimeout(scan, ms));         // Word builds its page in stages
 })();
