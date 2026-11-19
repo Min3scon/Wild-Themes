@@ -120,7 +120,7 @@
   // look because the page behind is painted in the app's own background colour.
   function scanPane() {
     // Teams v2 has no role=main; its chat/channel area is app-layout-area--main
-    const root = D.querySelector("[role=main]") || D.querySelector('[data-tid="app-layout-area--main"]'), rr = root && root.getBoundingClientRect();
+    const root = D.querySelector('[data-tid="app-layout-area--main"]') || D.querySelector("[role=main]"), rr = root && root.getBoundingClientRect();
     if (!rr || rr.width * rr.height < 1e5) return;
     let shell = "";
     for (let a = root.parentElement; a && a != D.body && a != H_; a = a.parentElement) {

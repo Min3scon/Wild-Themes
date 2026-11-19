@@ -287,6 +287,7 @@ class AppWindow : Form
     static void Debug(string s) { var d = Environment.GetEnvironmentVariable("WILDTHEMES_DEBUG"); if (d != null) try { File.AppendAllText(Path.Combine(d, "log.txt"), DateTime.Now.ToString("T") + " " + s + Environment.NewLine); } catch { } }
 
     readonly Microsoft.Web.WebView2.WinForms.WebView2 web = new() { Dock = DockStyle.Fill };
+    bool toured;
     AppWindow(string title, string url)
     {
         Text = title + " · Wild Themes"; Width = 1400; Height = 900; StartPosition = FormStartPosition.CenterScreen; Icon = SystemIcons.Application;
@@ -314,6 +315,19 @@ class AppWindow : Form
             {
                 var exts = string.Join(", ", (await web.CoreWebView2.Profile.GetBrowserExtensionsAsync()).Select(x => x.Name + (x.IsEnabled ? "" : " (off)")));
                 var ww = await web.CoreWebView2.ExecuteScriptAsync("document.documentElement.dataset.ww || ''");
+                // tour.txt: one line of script per step (e.g. click a rail button); a picture after each
+                var tour = Path.Combine(dbg, "tour.txt");
+                if (File.Exists(tour) && !toured)
+                {
+                    toured = true; int i = 0;
+                    foreach (var js in File.ReadAllLines(tour).Where(l => l.Trim().Length > 0))
+                    {
+                        await web.CoreWebView2.ExecuteScriptAsync(js);
+                        await System.Threading.Tasks.Task.Delay(5000);
+                        using var tf = File.Create(Path.Combine(dbg, $"tour-{++i}.png"));
+                        await web.CoreWebView2.CapturePreviewAsync(Microsoft.Web.WebView2.Core.CoreWebView2CapturePreviewImageFormat.Png, tf);
+                    }
+                }
                 var probe = Path.Combine(dbg, "probe.js");
                 if (File.Exists(probe)) Debug("probe: " + await web.CoreWebView2.ExecuteScriptAsync(File.ReadAllText(probe)));
                 Debug($"{web.CoreWebView2.Source} | extensions: {exts} | data-ww={ww}");
