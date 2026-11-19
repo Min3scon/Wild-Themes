@@ -61,16 +61,34 @@ class Scene : Form
     protected override bool ShowWithoutActivation => true;
     protected override void OnHandleCreated(EventArgs e) { base.OnHandleCreated(e); SetLayeredWindowAttributes(Handle, 0, 255, 2); }
 
-    void Use(string id)
+    void Use(string id, bool remember = true)
     {
         var f = Path.Combine(dir, id + ".gif");
         if (!File.Exists(f)) return;
-        pic.Image = Image.FromFile(f);
-        Settings.Set("scene", id);
+        var old = pic.Image; pic.Image = Image.FromFile(f); old?.Dispose();
+        if (remember) Settings.Set("scene", id);
+    }
+
+    [DllImport("ole32.dll", CharSet = CharSet.Unicode)] static extern int CLSIDFromProgID(string p, out Guid g);
+    [DllImport("oleaut32.dll")] static extern int GetActiveObject(ref Guid g, IntPtr r, [MarshalAs(UnmanagedType.IUnknown)] out object o);
+    int n; string fileScene;
+    // The open document's own theme (custom property WildTheme), so the sides match the page.
+    void FromDocument()
+    {
+        try
+        {
+            CLSIDFromProgID("Word.Application", out var g);
+            if (GetActiveObject(ref g, IntPtr.Zero, out var o) != 0) return;
+            dynamic app = o;
+            string id = app.ActiveDocument.CustomDocumentProperties.Item("WildTheme").Value;
+            if (id != fileScene && File.Exists(Path.Combine(dir, id + ".gif"))) { fileScene = id; Use(id, false); }
+        }
+        catch { /* no document or no theme in it: keep the chosen scene */ }
     }
 
     void Follow()
     {
+        if (n++ % 8 == 0) FromDocument();
         var fg = GetForegroundWindow(); var cls = new StringBuilder(32); GetClassName(fg, cls, 32);
         if (cls.ToString() == "OpusApp" && fg != word) Attach(fg);                       // whichever Word window is in front
         if (word == IntPtr.Zero || !IsWindow(word)) { word = FindWindow("OpusApp", null); if (word != IntPtr.Zero) Attach(word); }
