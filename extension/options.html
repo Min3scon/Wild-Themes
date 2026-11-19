@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Wild Themes</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="options.css"></head>
+<body>
+<header><b class="logo" aria-hidden="true"></b><h1>Wild Themes</h1>
+  <nav class="seg" role="tablist"><button role="tab" data-tab="file">Save a theme into a file</button><button role="tab" data-tab="custom">Custom themes</button></nav>
+</header>
+
+<section id="tab-file" role="tabpanel">
+  <h2>Save a theme into a file</h2>
+  <p class="lede">Works with Word (.docx), PowerPoint (.pptx) and Excel (.xlsx). The theme is written into the file itself: backdrop, colours, fonts and hidden file properties. Anyone who opens it sees it, on the desktop apps or the web, with nothing installed. Your own text and colours are left exactly as they are.</p>
+  <ol class="steps">
+
+    <li><label for="pick">Pick a theme</label><select id="pick"></select></li>
+    <li><label class="drop" id="drop"><input type="file" id="docx" accept=".docx,.pptx,.xlsx">
+      <b id="dropname">Choose a Word, PowerPoint or Excel file</b><span>or drop it here. The themed copy downloads straight away. On the web, get the file with File › Save As › Download a Copy.</span></label></li>
+    <li><div class="actions"><button id="stamp" class="btn primary" disabled>Make it again</button>
+      <button id="blank" class="btn">New Word document with this theme</button>
+      <button id="teamsbg" class="btn">Teams meeting background</button>
+      <button id="unstamp" class="btn" disabled>Remove the theme from this file</button></div></li>
+    <li>Upload the themed copy to OneDrive (or replace the original). Done: it carries the theme everywhere. For Teams, add the meeting background under Video effects › More video effects › Add new.</li>
+  </ol>
+  <p id="msg" role="status"></p>
+</section>
+
+<section id="tab-custom" role="tabpanel" hidden>
+  <h2>Custom themes</h2>
+  <div class="maker">
+    <label>Name <input id="cname" maxlength="30" placeholder="My theme"></label>
+    <div class="seg" role="radiogroup" aria-label="Made from"><button data-k="colours" role="radio">Colours</button><button data-k="picture" role="radio">Picture</button></div>
+    <div id="k-colours" class="kind">
+      <label>Background <input type="color" id="c1" value="#120a2a"></label>
+      <label>Glow 1 <input type="color" id="c2" value="#ff2bd6"></label>
+      <label>Glow 2 <input type="color" id="c3" value="#21e6ff"></label>
+      <label>Effect <select id="part"><option value="none">None</option><option value="stars">Twinkling stars</option><option value="snow">Snow</option><option value="bubbles">Bubbles</option><option value="confetti">Confetti</option></select></label>
+    </div>
+    <div id="k-picture" class="kind" hidden>
+      <label class="drop small"><input type="file" id="pic" accept="image/png,image/jpeg,image/webp,image/gif"><b id="picname">Choose a picture</b><span>PNG, JPG, WebP or GIF. It's shown still, which keeps things fast.</span></label>
+      <label>Darken <input type="range" id="dim" min="0" max="0.7" step="0.05" value="0.2"></label>
+      <label>Accent <input type="color" id="acc" value="#8a5cff"></label>
+    </div>
+    <label>Sparks <select id="cfx"><option>dot</option><option>neon</option><option>star</option><option>snow</option><option>petal</option><option>confetti</option><option>bubble</option><option>ember</option><option>glyph</option></select></label>
+    <div class="preview" id="prev"></div>
+    <button id="csave" class="btn primary">Save theme</button>
+  </div>
+  <h3>Your themes</h3>
+  <ul id="mine" class="mine"></ul>
+  <div class="actions"><label class="btn"><input type="file" id="imp" accept=".wildtheme,application/json" hidden>Import a theme file</label></div>
+  <p id="cmsg" role="status"></p>
+</section>
+<script src="vendor/jszip.min.js"></script>
+<script src="lib/themes.js"></script>
+<script src="lib/stamper.js"></script>
+<script src="lib/stamper-pptx.js"></script>
+<script src="lib/stamper-xlsx.js"></script>
+<script src="lib/assets.js"></script>
+<script src="options.js"></script>
+</body></html>

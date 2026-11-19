@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Wild Themes</title><link rel="stylesheet" href="popup.css"></head>
+<body>
+<header>
+  <b class="logo" aria-hidden="true"></b><h1>Wild Themes</h1>
+  <label class="sw" title="Turn themes on or off"><input type="checkbox" id="on"><span></span><i class="sr">Themes on</i></label>
+</header>
+<div class="doc" id="doc" hidden>
+  <div class="seg" role="radiogroup" aria-label="Apply to">
+    <button id="scope-doc" role="radio">This document</button><button id="scope-all" role="radio">All documents</button>
+  </div>
+  <p id="filenote" hidden></p>
+</div>
+<div class="filter seg" role="radiogroup" aria-label="Show">
+  <button data-f="all" role="radio">All</button><button data-f="dark" role="radio">Dark</button><button data-f="light" role="radio">Light</button><button data-f="custom" role="radio">Mine</button>
+</div>
+<main id="grid" role="radiogroup" aria-label="Theme"></main>
+<section class="opts">
+  <div class="row"><span>Animation</span>
+    <div class="seg" id="motion" role="radiogroup" aria-label="Animation">
+      <button data-v="auto" role="radio" title="On, unless your device is low-powered or asks for less motion">Auto</button><button data-v="on" role="radio">On</button><button data-v="off" role="radio">Still</button>
+    </div></div>
+  <label class="row"><span>Sparks when typing</span><input type="checkbox" id="sparks"></label>
+</section>
+<footer>
+  <button id="save-file" class="btn primary">Save theme into a file</button>
+  <button id="customs" class="btn">Custom themes</button>
+</footer>
+<script src="lib/themes.js"></script>
+<script src="popup.js"></script>
+</body></html>

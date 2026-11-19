@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wild Themes</title><link rel="stylesheet" href="taskpane.css">
+<script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script></head>
+<body>
+<header><b class="logo" aria-hidden="true"></b><h1>Wild Themes</h1></header>
+<p class="lede" id="lede">Pick a theme. It's saved into this file, so everyone who opens it sees it, on the desktop apps and the web.</p>
+<p id="now" class="now"></p>
+<div class="seg" role="radiogroup" aria-label="Show"><button data-f="all" role="radio">All</button><button data-f="dark" role="radio">Dark</button><button data-f="light" role="radio">Light</button></div>
+<main id="grid" role="radiogroup" aria-label="Theme"></main>
+<p class="note" id="note">Applying a theme rebuilds the file with the same content. Comments and tracked changes may not carry over, so save a copy first if you need them. You can undo with version history.</p>
+<p id="msg" role="status"></p>
+<button id="remove" class="remove" hidden>Remove theme from this file</button>
+<script src="../extension/vendor/jszip.min.js"></script>
+<script src="../extension/lib/themes.js"></script>
+<script src="../extension/lib/stamper.js"></script>
+<script src="../extension/lib/stamper-pptx.js"></script>
+<script src="../extension/lib/stamper-xlsx.js"></script>
+<script src="../extension/lib/assets.js"></script>
+<script src="taskpane.js"></script>
+</body></html>

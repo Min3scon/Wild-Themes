@@ -1,0 +1,53 @@
+/* Wild Themes — base styles. Scenes live in scenes.css. Nothing here repaints per frame:
+   scenes are gradients painted once, and the only animations move or fade whole layers. */
+#ww-bg{position:fixed!important;inset:0!important;z-index:-1!important;display:block!important;margin:0!important;
+  pointer-events:none!important;overflow:hidden!important;contain:strict}
+#ww-bg>i,#ww-bg>canvas{position:absolute;inset:0;display:block;pointer-events:none;font-style:normal}
+#ww-bg.still,#ww-bg.still *{animation:none!important}
+#ww-bg.veil::after{content:"";position:absolute;inset:0;background:var(--ww-veil,transparent)}
+
+/* make room for the scene: only Word's grey canvas behind the page turns see-through */
+html[data-ww]{background:var(--ww-base)!important}
+html[data-ww] body{background:transparent!important}
+html[data-ww] [data-ww-clear]{background-color:transparent!important;background-image:none!important}
+html[data-ww] [data-ww-page]{box-shadow:0 0 0 1px var(--ww-edge),0 0 22px var(--ww-glow)!important}
+html[data-ww] [role="tab"][aria-selected="true"]{box-shadow:inset 0 -3px 0 var(--ww-a)!important}
+
+/* custom colour themes */
+#ww-bg[data-scene="custom"]{background:radial-gradient(120% 90% at 0% 0%,var(--ww-c2),transparent 60%),
+  radial-gradient(120% 90% at 100% 100%,var(--ww-c3),transparent 60%),var(--ww-c1)}
+#ww-bg[data-scene="custom"]>i:nth-child(1){opacity:var(--ww-dim,0);background:var(--ww-dimc,#000)}
+
+/* shared particle layer for custom themes: one painted tile, slid by exactly one tile */
+#ww-bg[data-part]>i:nth-child(2){inset:-256px 0 0 0;background-size:256px 256px;will-change:transform;
+  animation:ww-fall 14s linear infinite}
+#ww-bg[data-part="snow"]>i:nth-child(2){background-image:radial-gradient(2px 2px at 30px 40px,#fff,transparent),
+  radial-gradient(3px 3px at 150px 90px,#fffc,transparent),radial-gradient(2px 2px at 90px 200px,#fff,transparent),
+  radial-gradient(1.5px 1.5px at 210px 160px,#fff,transparent),radial-gradient(2.5px 2.5px at 230px 20px,#fffd,transparent)}
+#ww-bg[data-part="stars"]>i:nth-child(2){animation:ww-blink 5s ease-in-out infinite alternate;inset:0;
+  background-image:radial-gradient(1.5px 1.5px at 20px 30px,#fff,transparent),radial-gradient(1px 1px at 120px 80px,#fff,transparent),
+  radial-gradient(2px 2px at 200px 190px,#fff,transparent),radial-gradient(1px 1px at 60px 220px,#fff,transparent)}
+#ww-bg[data-part="bubbles"]>i:nth-child(2){animation-direction:reverse;animation-duration:18s;
+  background-image:radial-gradient(circle at 40px 60px,transparent 5px,#fff9 6px,transparent 7px),
+  radial-gradient(circle at 180px 170px,transparent 8px,#fff8 9px,transparent 10px),radial-gradient(circle at 110px 230px,transparent 3px,#fffa 4px,transparent 5px)}
+#ww-bg[data-part="confetti"]>i:nth-child(2){animation-duration:10s;
+  background-image:linear-gradient(#ff3d7f,#ff3d7f),linear-gradient(#ffbe0b,#ffbe0b),linear-gradient(#3a86ff,#3a86ff),linear-gradient(#06d6a0,#06d6a0);
+  background-size:6px 10px;background-repeat:no-repeat;background-position:30px 40px,160px 110px,90px 200px,220px 230px}
+@keyframes ww-fall{to{transform:translateY(256px)}}
+@keyframes ww-blink{from{opacity:.35}to{opacity:1}}
+
+/* typing sparks: a small pool of dots animated by the browser, positioned at the cursor */
+#ww-fx{position:fixed!important;left:0!important;top:0!important;width:0!important;height:0!important;
+  z-index:2147483647!important;pointer-events:none!important;overflow:visible!important}
+#ww-fx>b{position:absolute;left:-3px;top:-3px;width:6px;height:6px;border-radius:50%;background:var(--c);opacity:0;
+  pointer-events:none;font:700 12px/1 monospace;color:var(--c)}
+#ww-fx[data-fx="confetti"]>b{width:5px;height:9px;border-radius:1px}
+#ww-fx[data-fx="petal"]>b{width:8px;height:5px;border-radius:80% 0}
+#ww-fx[data-fx="bubble"]>b{background:none;border:1.5px solid var(--c)}
+#ww-fx[data-fx="drop"]>b{width:3px;height:9px;border-radius:2px}
+#ww-fx[data-fx="shape"]>b{border-radius:0;clip-path:polygon(50% 0,100% 100%,0 100%);width:8px;height:8px}
+#ww-fx[data-fx="glyph"]>b,#ww-fx[data-fx="star"]>b{background:none;width:auto;height:auto}
+#ww-fx[data-fx="neon"]>b,#ww-fx[data-fx="ember"]>b{box-shadow:0 0 6px var(--c)}
+
+/* shared scene animations (each theme's own CSS is loaded only when it's picked) */
+@keyframes ww-move{from{transform:translate3d(0,0,0)}to{transform:translate3d(var(--dx,0px),var(--dy,0px),0)}}@keyframes ww-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}@keyframes ww-pulse{0%,100%{opacity:var(--o1,.35)}50%{opacity:var(--o2,1)}}@keyframes ww-sway{0%,100%{transform:translate3d(var(--sx1,0px),var(--sy1,0px),0) scale(var(--s1,1))}50%{transform:translate3d(var(--sx2,0px),var(--sy2,0px),0) scale(var(--s2,1))}}

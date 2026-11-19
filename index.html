@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Wild Themes</title>
+<meta name="description" content="Animated themes for Word, PowerPoint, Excel and Teams. Save a theme into any file so everyone who opens it sees it.">
+<link rel="icon" href="extension/icons/icon32.png">
+<link rel="stylesheet" href="site.css">
+<link rel="stylesheet" id="scene-css" href="extension/scenes/synthwave.css">
+</head>
+<body>
+<header class="top">
+  <a class="mark" href="#"><b class="dot" aria-hidden="true"></b>wild themes</a>
+  <nav><a href="#gallery">Themes</a><a href="#file">Theme a file</a><a href="#get">Get it</a><a href="https://github.com/Min3scon/Wild-Themes">GitHub</a></nav>
+</header>
+
+<main>
+  <section class="hero">
+    <h1>Themes for Word, PowerPoint, Excel and Teams.</h1>
+    <p class="sub">Pick one. Save it into your file. Anyone who opens it sees it, with nothing installed.</p>
+    <div class="window" aria-label="Preview of the selected theme">
+      <div id="ww-bg" data-scene="synthwave" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <div class="ribbon"><span></span><span></span><span class="on"></span><span></span></div>
+      <div class="page"><b class="h"></b><b></b><b></b><b class="s"></b><b></b><b></b><b class="s"></b></div>
+      <p class="now" id="now">Synthwave Sunset</p>
+    </div>
+  </section>
+
+  <section id="gallery">
+    <div class="bar"><h2>Themes</h2>
+      <div class="chips" role="radiogroup" aria-label="Show"><button data-f="all" role="radio" aria-checked="true">All</button><button data-f="dark" role="radio">Dark</button><button data-f="light" role="radio">Light</button></div>
+    </div>
+    <div class="grid" id="grid" role="radiogroup" aria-label="Theme"></div>
+  </section>
+
+  <section id="file">
+    <h2>Theme a file</h2>
+    <p class="sub">Drop a Word, PowerPoint or Excel file. It comes straight back with <b id="pickname">Synthwave Sunset</b> saved inside: backdrop, colours, fonts. Your text stays exactly as it is. Nothing leaves your computer.</p>
+    <label class="drop" id="drop"><input type="file" id="in" accept=".docx,.pptx,.xlsx"><b>Drop a .docx, .pptx or .xlsx</b><span>or click to choose one</span></label>
+    <p class="msg" id="msg" role="status"></p>
+    <div class="row"><button class="btn" id="blank">Blank Word document</button><button class="btn" id="teams">Teams meeting background</button><button class="btn ghost" id="remove">Remove a theme from a file…</button>
+      <input type="file" id="rm" accept=".docx,.pptx,.xlsx" hidden></div>
+  </section>
+
+  <section id="get">
+    <h2>Get it</h2>
+    <div class="cols">
+      <article><h3>Themed files</h3><p>Nothing to install. Works in the desktop apps and on the web. The backdrop animates in desktop Word and PowerPoint.</p><a class="btn" href="downloads/wild-theme-documents.zip">18 starter documents</a></article>
+      <article><h3>Browser extension</h3><p>Animated scenes around your page in Word, PowerPoint, Excel and Teams on the web. Chrome, Edge, Brave, Arc.</p><a class="btn" href="downloads/wild-themes-extension.zip">Download</a>
+        <ol><li>Unzip it</li><li>Open <code>chrome://extensions</code>, turn on Developer mode</li><li>Load unpacked › pick the folder</li></ol></article>
+      <article><h3>Office add-in</h3><p>One click inside Word or PowerPoint, desktop or web, saves the theme into the open file.</p><a class="btn" href="addin/manifest.xml" download>manifest.xml</a>
+        <ol><li>Home › Add-ins › More Add-ins</li><li>My Add-ins › Upload My Add-in</li><li>Pick manifest.xml</li></ol></article>
+    </div>
+  </section>
+</main>
+<footer>Unofficial. Not made by Microsoft. <a href="https://github.com/Min3scon/Wild-Themes">Source on GitHub</a></footer>
+
+<script src="extension/vendor/jszip.min.js"></script>
+<script src="extension/lib/themes.js"></script>
+<script src="extension/lib/stamper.js"></script>
+<script src="extension/lib/stamper-pptx.js"></script>
+<script src="extension/lib/stamper-xlsx.js"></script>
+<script src="extension/lib/assets.js"></script>
+<script src="site.js"></script>
+</body>
+</html>
