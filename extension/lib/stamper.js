@@ -786,7 +786,8 @@
 
   // ------------------------------------------------------------------ drawings
   function anchorXml({ id, name, descr, title, rId, x, y, cx, cy, z }) {
-    return `<wp:anchor distT="0" distB="0" distL="0" distR="0" simplePos="0" relativeHeight="${z}" behindDoc="1" locked="1" layoutInCell="0" allowOverlap="1">` +
+    // Word-sized relativeHeight: desktop Word ignores tiny values (1, 2, 3) and drew the scene over the panel.
+    return `<wp:anchor distT="0" distB="0" distL="0" distR="0" simplePos="0" relativeHeight="${251650048 + z * 1024}" behindDoc="1" locked="1" layoutInCell="0" allowOverlap="1">` +
       `<wp:simplePos x="0" y="0"/><wp:positionH relativeFrom="page"><wp:posOffset>${x}</wp:posOffset></wp:positionH>` +
       `<wp:positionV relativeFrom="page"><wp:posOffset>${y}</wp:posOffset></wp:positionV>` +
       `<wp:extent cx="${cx}" cy="${cy}"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:wrapNone/>` +
