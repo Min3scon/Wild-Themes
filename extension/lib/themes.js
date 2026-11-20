@@ -415,5 +415,28 @@ self.WW_THEMES = {
       "minor": "Aptos",
       "panel": "#f5fffb"
     }
+  },
+  "larpcoder": {
+    "name": "LARP Coder",
+    "emoji": "⌨️",
+    "mode": "dark",
+    "blurb": "larpcoder, larpcoder, larpcoder… scrolling forever",
+    "accent": "#7c5cff",
+    "accent2": "#00e5ff",
+    "fx": "glyph",
+    "doc": {
+      "dk1": "0E0B1F",
+      "dk2": "241A5A",
+      "lt2": "F1EEFF",
+      "accent1": "5B3CE0",
+      "accent2": "0A7C93",
+      "accent3": "7C5CFF",
+      "accent4": "00E5FF",
+      "accent5": "FF4D8D",
+      "accent6": "39FF9A",
+      "major": "Consolas",
+      "minor": "Aptos",
+      "panel": "#faf8ff"
+    }
   }
 };

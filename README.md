@@ -12,6 +12,7 @@ Animated themes for Word, PowerPoint, Excel and Teams, saved **inside** your fil
 | `addin/` | Office add-in for Word, PowerPoint and Excel (Windows, Mac, web) |
 | `teams/` | Teams app: File studio and the theme gallery as tabs |
 | `catalog.json` | Live theme list (built-in + approved community themes), rebuilt on every deploy. The add-in and the extension read it, so new themes arrive without a new download |
+| `scripts/theme-assets.js` | Makes a new theme's pictures (gallery card, Word and PowerPoint backdrops, Teams background) from its scene file: `node scripts/theme-assets.js <id>`. A theme is one scene in `extension/scenes/`, an entry in `extension/lib/themes.js`, and these pictures |
 | `documents/` | One Word document per theme, ready to use |
 | `tests/` | Regression tests (run in CI on every push) |
 
