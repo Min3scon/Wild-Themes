@@ -53,3 +53,14 @@ html[data-ww] [role="tab"][aria-selected="true"]{box-shadow:inset 0 -3px 0 var(-
 
 /* shared scene animations (each theme's own CSS is loaded only when it's picked) */
 @keyframes ww-move{from{transform:translate3d(0,0,0)}to{transform:translate3d(var(--dx,0px),var(--dy,0px),0)}}@keyframes ww-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}@keyframes ww-pulse{0%,100%{opacity:var(--o1,.35)}50%{opacity:var(--o2,1)}}@keyframes ww-sway{0%,100%{transform:translate3d(var(--sx1,0px),var(--sy1,0px),0) scale(var(--s1,1))}50%{transform:translate3d(var(--sx2,0px),var(--sy2,0px),0) scale(var(--s2,1))}}
+
+/* Google Docs dark page (Auto follows the theme): the page's canvas is inverted with its hues kept, so black text turns light
+   and coloured text stays recognisable; its white backing becomes the theme's dark colour (--ww-docbg). Photos in the
+   document are inverted too: that's the price of drawing text on a canvas, and Dark page: Off in the popup undoes it. */
+html[data-ww-dark] .kix-appview-editor canvas,html[data-ww-dark] .kix-appview-editor .kix-cursor{filter:invert(1) hue-rotate(180deg)}
+html[data-ww-dark] .kix-canvas-tile-content{background-color:var(--ww-docbg,#e8e8ee)!important}
+
+/* Google Docs clean view: no rulers and no scrollbar (scrolling still works); the scene fills the space they took */
+html[data-ww-clean] #kix-horizontal-ruler-container,html[data-ww-clean] #kix-vertical-ruler,html[data-ww-clean] .docs-horizontal-ruler,html[data-ww-clean] .docs-vertical-ruler{visibility:hidden!important}
+html[data-ww-clean] .kix-appview-editor{scrollbar-width:none!important}
+html[data-ww-clean] .kix-appview-editor::-webkit-scrollbar{display:none!important}

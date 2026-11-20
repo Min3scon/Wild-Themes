@@ -13,7 +13,7 @@
     : /\/x\//i.test(P) || HN == "excel.cloud.microsoft" || /^teams\./.test(HN) || HN == "assignments.edu.cloud.microsoft" ? "pane" : "";   // Assignments: its own site, in a frame inside Teams
   if (window.__ww || !app || innerWidth < 300) return;
   window.__ww = 1;
-  const T = self.WW_THEMES, DEF = { on: true, theme: "synthwave", motion: "auto", sparks: true, docs: {} };
+  const T = self.WW_THEMES, DEF = { on: true, theme: "synthwave", motion: "auto", sparks: true, docs: {}, docsDark: "auto", docsClean: true };
   const ATTR = (n, a, v) => v == null ? n.removeAttribute(a) : n.setAttribute(a, v);
   let S = DEF, custom = {}, R = {}, id, t, bg, fx, file, pages = [], tm, last = 0, ptr, k = 0;
 
@@ -83,6 +83,14 @@
     }, ms);
   };
 
+  // Google Docs dark page: the page's canvas is drawn through invert(1) hue-rotate(180deg), so the colour its white backing
+  // needs is the one that comes out as the theme's dark colour (that filter is its own inverse, up to the 0-1 clamp).
+  const docBg = () => {
+    const h = ((t && t.doc && t.doc.dk1) || (t && t.colors && t.colors[0] || "").replace("#", "") || "17141f").slice(0, 6), n = parseInt(h, 16) || 0x17141f;
+    const d = [n >> 16 & 255, n >> 8 & 255, n & 255].map((v) => v / 255), M = [[-.574, 1.43, .144], [.426, .43, .144], [.426, 1.43, -.856]];
+    return "#" + M.map((r) => Math.max(0, Math.min(1, 1 - (r[0] * d[0] + r[1] * d[1] + r[2] * d[2]))) * 255 + .5 | 0).map((v) => v.toString(16).padStart(2, "0")).join("");
+  };
+
   // Don't show anything until we know which theme applies: in Word/PowerPoint a theme saved in
   // the file only shows up once the page is drawn, and showing the default first made it flash.
   let ready = app == "pane" || GH, seen = 0;   // Google files carry no theme we can read: nothing to wait for
@@ -116,6 +124,8 @@
       H_.append(bg);
       H_.style.cssText += `;--ww-a:${t.accent};--ww-edge:${t.accent}88;--ww-glow:${t.accent}55;--ww-base:${t.custom ? t.colors && t.colors[0] : t.mode == "light" ? "#f3eefa" : "#08060f"}`;
       H_.dataset.ww = id;
+      const vs = D.getElementById("ww-vars") || D.head.appendChild(Object.assign(D.createElement("style"), { id: "ww-vars" }));
+      vs.textContent = `html[data-ww]{--ww-a:${t.accent};--ww-edge:${t.accent}88;--ww-glow:${t.accent}55;--ww-docbg:${docBg()}}`;
       guard(3000);
     }
     if (!bg) return;                                                // nothing shown yet (still waiting)
@@ -130,6 +140,8 @@
     if (fx) fx.remove(), (fx = 0);
     id = t = null;
     delete H_.dataset.ww;
+    H_.removeAttribute("data-ww-dark"); H_.removeAttribute("data-ww-clean");
+    const vs = D.getElementById("ww-vars"); if (vs) vs.remove();
     for (const v of ["--ww-a", "--ww-edge", "--ww-glow", "--ww-base"]) H_.style.removeProperty(v);
     D.querySelectorAll("[data-ww-clear],[data-ww-page]").forEach((n) => (ATTR(n, "data-ww-clear"), ATTR(n, "data-ww-page")));
     pages = [];
@@ -210,16 +222,38 @@
   function scanDocs() {
     const ed = D.querySelector(".kix-appview-editor"), er = ed && ed.getBoundingClientRect();
     const pg = [...D.querySelectorAll(".kix-page-paginated")];
-    if (!er || er.width * er.height < 1e5 || !pg.length) return false;     // pageless, or Google changed the layout: the general scan tries
+    if (!er || er.width * er.height < 1e5 || !pg.length) { H_.removeAttribute("data-ww-dark"); H_.removeAttribute("data-ww-clean"); return false; }     // pageless, or Google changed the layout: the general scan tries
     const base = shellColour();
     for (let a = ed; a && a != D.body && a != H_; a = a.parentElement) if (a.hasAttribute("data-ww-clear") || solid(a)) ATTR(a, "data-ww-clear", "");
     if (base) H_.style.setProperty("--ww-base", base, "important");
+    // Clean view: the rulers and the scrollbar are hidden (CSS, by data-ww-clean) and the scene takes their place
+    const clean = S.docsClean !== false;
+    if (H_.hasAttribute("data-ww-clean") != clean) { ATTR(H_, "data-ww-clean", clean ? "" : null); setTimeout(() => dispatchEvent(new Event("resize")), 50); }   // Docs centres the page again without the scrollbar
+    let top = er.top, left = er.left;
+    if (clean) {
+      const hr = D.querySelector("#kix-horizontal-ruler-container, .docs-horizontal-ruler"), vr = D.querySelector("#kix-vertical-ruler, .docs-vertical-ruler");
+      const hb = hr && hr.getBoundingClientRect(), vb = vr && vr.getBoundingClientRect();
+      if (hb && hb.height && hb.bottom <= er.top + 40) top = Math.min(top, hb.top);        // the ruler above the page
+      if (vb && vb.width && vb.right <= er.left + 40) left = Math.min(left, vb.left);      // the ruler beside it
+    }
     bg.style.setProperty("inset", "auto", "important");
-    for (const [k, v] of [["top", er.top], ["left", er.left], ["width", er.width], ["height", er.height]]) bg.style.setProperty(k, v + "px", "important");
+    for (const [k, v] of [["top", top], ["left", left], ["width", er.right - left], ["height", er.bottom - top]]) bg.style.setProperty(k, v + "px", "important");
     bg.classList.remove("veil");
-    pages.forEach((p) => pg.includes(p) || ATTR(p, "data-ww-page"));
-    pg.forEach((p) => ATTR(p, "data-ww-page", ""));
-    pages = pg;
+    // the glow goes on the outermost box that is exactly the page's size: an inner wrapper may be clipped by an ancestor
+    const glow = pg.map((p) => {
+      const pr = p.getBoundingClientRect(); let g = p;
+      for (let a = p.parentElement; a && a != ed; a = a.parentElement) {
+        const r = a.getBoundingClientRect();
+        if (Math.abs(r.width - pr.width) > 3 || Math.abs(r.left - pr.left) > 3) break;
+        g = a;
+      }
+      return g;
+    });
+    pages.forEach((p) => glow.includes(p) || ATTR(p, "data-ww-page"));
+    glow.forEach((p) => ATTR(p, "data-ww-page", ""));
+    pages = glow;
+    const dark = S.docsDark == "on" || (S.docsDark != "off" && !!t && t.mode == "dark");   // Auto follows the theme
+    if (H_.hasAttribute("data-ww-dark") != dark) ATTR(H_, "data-ww-dark", dark ? "" : null);
     return true;
   }
 
@@ -343,6 +377,8 @@
     version: chrome.runtime.getManifest().version, page: HN + P.replace(/\/d\/[\w-]+/, "/d/ID"), app, theme: id, level, motion: S.motion, still: still(),
     scene: !!(bg && bg.isConnected), sceneBox: bg ? bg.style.cssText.slice(0, 200) : "", viewport: [innerWidth, innerHeight],
     editor: !!D.querySelector(".kix-appview-editor"), pages: D.querySelectorAll(".kix-page-paginated").length,
+    rulers: [...D.querySelectorAll("#kix-horizontal-ruler-container,#kix-vertical-ruler,.docs-horizontal-ruler,.docs-vertical-ruler")].map(sig), dark: H_.hasAttribute("data-ww-dark"), clean: H_.hasAttribute("data-ww-clean"),
+    scrollbar: (() => { const e = D.querySelector(".kix-appview-editor"); return e ? e.offsetWidth - e.clientWidth : -1; })(),
     at: [[.5, .5], [.08, .5], [.92, .5], [.5, .2], [.5, .85]].map(([x, y]) => ({ x, y, stack: D.elementsFromPoint(innerWidth * x, innerHeight * y).slice(0, 12).map(sig) })),
   });
   chrome.runtime.onMessage.addListener((m, _, reply) => {

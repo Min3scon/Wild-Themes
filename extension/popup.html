@@ -10,7 +10,11 @@
     <button id="scope-doc" role="radio">This document</button><button id="scope-all" role="radio">All documents</button>
   </div>
   <p id="filenote" hidden></p>
-  <p id="gnote" class="gnote" hidden><span id="gstate"></span> <button id="gcopy" class="linkbtn">Copy page details</button></p>
+  <div id="gnote" class="gnote" hidden>
+    <div class="row"><span>Dark page (Docs)</span><div class="seg" id="gdark" role="radiogroup" aria-label="Dark page"><button data-d="auto" role="radio" title="Dark when the theme is dark">Auto</button><button data-d="on" role="radio">On</button><button data-d="off" role="radio">Off</button></div></div>
+    <label class="row"><span>Hide rulers and scrollbar (Docs)</span><input type="checkbox" id="gclean"></label>
+    <p><span id="gstate"></span> <button id="gcopy" class="linkbtn">Copy page details</button></p>
+  </div>
 </div>
 <div class="filter seg" role="radiogroup" aria-label="Show">
   <button data-f="all" role="radio">All</button><button data-f="dark" role="radio">Dark</button><button data-f="light" role="radio">Light</button><button data-f="community" role="radio">Community</button><button data-f="custom" role="radio">Mine</button>
