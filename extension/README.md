@@ -44,10 +44,11 @@ Browsers install add-ons in one click only from their own stores, so until Wild 
 
 **Firefox** (version 140 or newer; `wild-themes-firefox.zip`)
 
-Firefox keeps an add-on after a restart only when Mozilla has signed it. Three ways:
+Firefox keeps an add-on after a restart only when Mozilla has signed it. Opening or dragging an unsigned file into Firefox fails with "This add-on could not be installed because it has not been verified": that is this rule, not a broken download. Ways around it:
 
 - *Signed copy:* when `downloads/wild-themes-firefox.xpi` is published the website offers **Install in Firefox**. The repository's **Sign Firefox add-on** workflow makes that file with a free Mozilla account (`.github/workflows/firefox-sign.yml` says how).
 - *Until Firefox restarts:* open `about:debugging#/runtime/this-firefox`, click **Load Temporary Add-on…** and choose `wild-themes-firefox.zip` (don't unzip it), or the `manifest.json` inside an unzipped copy. Firefox treats access to websites as a permission you grant: allow it if asked; if the scene doesn't show, open `about:addons`, click Wild Themes › Permissions and switch on access to Word, Google Docs and Teams.
+- *Keep it in regular Firefox, without GitHub:* sign it on Mozilla's website. Free account at addons.mozilla.org/developers › Submit a New Add-on › **On your own** (not listed) › upload `wild-themes-firefox.zip` (new version number each time) › download the signed .xpi when the automatic check finishes › open it in Firefox.
 - *Developer Edition, Nightly or ESR:* set `xpinstall.signatures.required` to `false` in `about:config` (regular Firefox ignores it), then **about:addons › ⚙ › Install Add-on From File…** and choose `wild-themes-firefox-unsigned.xpi` (the same file as the zip).
 
 **Safari and phones:** not supported. Safari only runs add-ons built into a Mac app with Xcode and signed through Apple's developer program (Apple's `safari-web-extension-converter` can start one from this folder; not tried). Phone browsers can't load add-ons from a file; Firefox for Android only takes add-ons from Mozilla's store. Themed files, the File studio and the Office add-in work everywhere.

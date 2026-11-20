@@ -85,12 +85,14 @@ try { if (/[?&]host=office\b/.test(location.search)) sessionStorage.setItem("wt-
     <p class="fine">Expect a "developer mode extensions" notice when the browser starts. If you move or delete the folder, the add-on stops.</p>
   </div>
   <div data-browser="firefox" hidden>
-    <p class="fine">Firefox only keeps an add-on after a restart when Mozilla has signed it. Pick the way that fits:</p>
+    <p class="fine">Firefox only runs an add-on Mozilla has signed, or one you load for the session. If you open or drag the file into Firefox you get <b>"This add-on could not be installed because it has not been verified."</b> That's Firefox refusing an unsigned add-on, not a broken download: use one of these instead.</p>
     <div data-signed hidden><a class="btn btn-primary btn-block" href="downloads/wild-themes-firefox.xpi"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v10M7 11l5 5 5-5M5 19h14"/></svg> Install in Firefox (signed)</a><p class="fine">Firefox asks to add it. Nothing else to do.</p></div>
     <h4>For this session</h4>
     <a class="btn btn-primary btn-block" href="downloads/wild-themes-firefox.zip" download><svg class="i" viewBox="0 0 24 24"><path d="M12 5v10M7 11l5 5 5-5M5 19h14"/></svg> Download the Firefox add-on</a>
     <ol class="steps"><li>Don't unzip it. Open <span class="cmd"><code>about:debugging#/runtime/this-firefox</code><button class="btn btn-ghost btn-xs copy" data-copy="about:debugging#/runtime/this-firefox">Copy</button></span>.</li><li>Click <b>Load Temporary Add-on…</b> and choose the downloaded zip. It stays until you quit Firefox; do this again next time.</li><li>Firefox treats access to websites as a permission you grant: if it asks about Word, Google Docs and Teams, allow it. If the scene doesn't show, open <span class="cmd"><code>about:addons</code></span>, click <b>Wild Themes › Permissions</b> and switch on access to those sites.</li></ol>
-    <h4>To keep it (Firefox Developer Edition, Nightly or ESR)</h4>
+    <h4>To keep it in regular Firefox: get it signed (free, about 10 minutes)</h4>
+    <ol class="steps"><li>Make a free account at <a href="https://addons.mozilla.org/developers/" target="_blank" rel="noopener">addons.mozilla.org/developers</a>.</li><li><b>Submit a New Add-on</b>, choose <b>On your own</b> (not listed on the store), and upload the Firefox zip above. The version number must be new each time.</li><li>When Mozilla's automatic check finishes, download the <b>signed</b> .xpi it gives you and open it in Firefox: it installs and stays.</li></ol>
+    <h4>Or use Firefox Developer Edition, Nightly or ESR</h4>
     <ol class="steps"><li>Open <span class="cmd"><code>about:config</code></span> and set <code>xpinstall.signatures.required</code> to <code>false</code>. Regular Firefox ignores this setting.</li><li>Download <a href="downloads/wild-themes-firefox-unsigned.xpi" download>wild-themes-firefox-unsigned.xpi</a>, open <code>about:addons</code>, click <b>⚙ › Install Add-on From File…</b> and choose it.</li></ol>
   </div>
   <div data-browser="safari" hidden>

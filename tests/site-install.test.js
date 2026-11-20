@@ -78,6 +78,15 @@ test("site install dialog: steps for the browser in use, one per browser, signed
       await page.context().close();
     });
 
+    await t.test("Firefox pane explains the 'has not been verified' error and how to get a signed copy", async () => {
+      const page = await open(browser, srv.address().port, UA.firefox);
+      const text = await page.textContent('#dlg [data-browser="firefox"]');
+      assert.match(text, /This add-on could not be installed because it has not been verified\./);
+      assert.match(text, /On your own/);
+      assert.match(text, /Load Temporary Add-on/);
+      await page.context().close();
+    });
+
     await t.test("the signed Firefox install shows up once downloads/wild-themes-firefox.xpi exists", async () => {
       const page = await open(browser, srv2.address().port, UA.firefox);
       await page.waitForFunction(() => !document.querySelector("#dlg [data-signed]").hidden, null, { timeout: 5000 });
