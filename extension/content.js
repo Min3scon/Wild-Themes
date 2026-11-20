@@ -13,7 +13,7 @@
     : /\/x\//i.test(P) || HN == "excel.cloud.microsoft" || /^teams\./.test(HN) || HN == "assignments.edu.cloud.microsoft" ? "pane" : "";   // Assignments: its own site, in a frame inside Teams
   if (window.__ww || !app || innerWidth < 300) return;
   window.__ww = 1;
-  const T = self.WW_THEMES, DEF = { on: true, theme: "synthwave", motion: "auto", sparks: true, docs: {}, docsDark: "auto", docsClean: true };
+  const T = self.WW_THEMES, RW = self.WWRewards, DEF = { on: true, theme: "synthwave", motion: "auto", sparks: true, docs: {}, docsDark: "auto", docsClean: true, found: {} };
   const ATTR = (n, a, v) => v == null ? n.removeAttribute(a) : n.setAttribute(a, v);
   let S = DEF, custom = {}, R = {}, id, t, bg, fx, file, pages = [], tm, last = 0, ptr, k = 0;
 
@@ -35,13 +35,14 @@
     return f;
   };
 
-  // this document's choice > the theme saved in the file > your default
+  // this document's choice > the theme saved in the file > your default. A secret theme counts only once it's been found.
+  const has = (w) => !!T[w] && !(T[w].secret && !(S.found || {})[w]);
   const pick = () => {
     const w = (key && S.docs[key]) || (file && file.id) || S.theme;
-    return T[w] ? [w, T[w]] : R[w] ? [w, R[w]] : custom[w] ? [w, custom[w]]
+    return has(w) ? [w, T[w]] : R[w] ? [w, R[w]] : custom[w] ? [w, custom[w]]
       : file && w == file.id ? [w, { custom: 1, mode: file.mode, accent: file.accent, accent2: file.accent2, fx: "dot",
         colors: [file.mode == "light" ? "#f4f1ff" : "#0d0b1a", file.accent, file.accent2] }]
-      : T[S.theme] ? [S.theme, T[S.theme]] : [];
+      : has(S.theme) ? [S.theme, T[S.theme]] : T[S.theme] ? [DEF.theme, T[DEF.theme]] : [];   // a secret not found yet: the usual default
   };
   // Smoothness guard (Auto only): the scene's real frame rate is measured; if this device can't keep up, the big
   // or 3D layers stop first (level 1: "lite"), then everything (level 2). The verdict is remembered per device.
@@ -104,6 +105,7 @@
   function apply() {
     const [nid, nt] = S.on && (ready || (key && S.docs[key])) ? pick() : [];
     if (nid != id) {
+      flush();                                                      // words so far belong to the theme they were typed in
       clear();
       if (!nid) return;
       id = nid; t = nt;
@@ -315,9 +317,43 @@
   }
   const later = (ms) => { clearTimeout(tm); tm = setTimeout(scan, ms); };
 
+  // Words typed with a theme showing, per theme. Counted from real key presses only (letters or digits, then a space,
+  // Enter or punctuation), so pasted or dropped text never counts; paste itself still works as usual. Sent every few
+  // seconds; the background adds them up and rolls the dice for the secret theme, one roll per word.
+  let inWord = false, typed = 0, typedFor = null, ft = 0;
+  const countKey = (e) => {
+    const k = RW.keyKind(e);
+    if (k == "char") inWord = !!id;
+    else if (k == "end" && inWord) {
+      inWord = false;
+      if (typedFor && typedFor != id) flush();
+      typed++; typedFor = id;
+      if (!ft) ft = setTimeout(flush, 4000);
+    }
+  };
+  function flush() {
+    clearTimeout(ft); ft = 0;
+    if (!typed || !typedFor) return;
+    const n = typed, th = typedFor; typed = 0;
+    try { chrome.runtime.sendMessage({ words: n, theme: th }, (r) => !chrome.runtime.lastError && r && reward(r)); } catch (_) { /* the extension was updated: this page's script is orphaned */ }
+  }
+  addEventListener("pagehide", flush);
+  D.addEventListener("visibilitychange", () => D.hidden && flush());
+  // A reward plays its cutscene here, where it was earned
+  const calm = () => S.motion == "off" || matchMedia("(prefers-reduced-motion:reduce)").matches;
+  const reward = (r) => {
+    const s = T[RW.SECRET];
+    if (r.secret && s) self.WWCut.secret({ ...s, words: r.total, odds: RW.ODDS, calm: calm(), use: () => chrome.storage.sync.set({ theme: RW.SECRET, on: true }) });
+    else if (r.badge) {
+      const m = RW.MILESTONES.find((x) => x.id == r.badge);
+      if (m) self.WWCut.badge({ ...m, total: r.total, accent: t ? t.accent : s.accent, accent2: t ? t.accent2 : s.accent2, calm: calm() });
+    }
+  };
+
   // Typing sparks: 12 reusable dots, coloured once per theme, moved by the compositor.
   const G = "01<>{}#*+✦✧★";
   const onKey = (e) => {
+    countKey(e);
     const now = e.timeStamp;
     if (!t || !S.sparks || now - last < 90 || e.ctrlKey || e.metaKey || e.altKey || (e.key.length > 1 && e.key != "Enter")) return;
     last = now;
@@ -359,7 +395,7 @@
     if (!GH) return;
     try {
       const d = (D.querySelector("iframe.docs-texteventtarget-iframe") || {}).contentDocument;
-      if (d && d != typingDoc) { typingDoc = d; d.addEventListener("keydown", onKey, true); }
+      if (d && d != typingDoc) { typingDoc = d; d.addEventListener("keydown", onKey, true); d.addEventListener("keydown", (e) => e.key == "Escape" && self.WWCut.esc(), true); }
     } catch (_) { /* not reachable: no sparks */ }
   };
   addEventListener("pointerdown", (e) => { ptr = [e.clientX, e.clientY]; }, { capture: true, passive: true });
@@ -394,6 +430,9 @@
   chrome.runtime.onMessage.addListener((m, _, reply) => {
     if (m == "ww-status") reply({ docKey: key, active: id, file, google: GH, shown: !!(bg && bg.isConnected) });
     if (m == "ww-details") reply(details());
+    // "Watch it again" in the popup: only the frame that shows the scene, and only once the theme has been found
+    if (m && m.cutscene == "secret" && bg && bg.isConnected && innerWidth >= 400 && (S.found || {})[RW.SECRET])
+      reward({ secret: RW.SECRET, total: S.found[RW.SECRET].words || 0 });
   });
 
   const load = () => chrome.storage.sync.get(DEF, (v) => chrome.storage.local.get(["customs", "community", "remote", "perf"], (c) => {
@@ -406,7 +445,7 @@
     file = readFile() || file;
     apply();
   }));
-  chrome.storage.onChanged.addListener(load);
+  chrome.storage.onChanged.addListener((c) => Object.keys(c).some((k) => k != "words") && load());   // word counts change often and alter nothing here
   load();
   // Wild Themes for Word and Teams (the desktop .exe), when it's running, says which theme is on:
   // use the same one, so the browser, Teams and Word all match.

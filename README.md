@@ -34,6 +34,10 @@ Plus a custom XML part (`urn:wild-themes:document-theme`) holding the theme's fu
 
 Office files aren't tamper-proof: the fingerprints detect accidental changes, they don't prevent edits.
 
+## Words typed and the secret theme (extension)
+
+The extension counts the words you type in each theme (shown on each card in the popup, with the total). Only real key presses count, one finished word at a time: pasted, dropped or dictated text doesn't, though paste still works as usual in your documents. Every typed word has a 1 in 37,500 chance (`ODDS` in `extension/lib/rewards.js`) to unlock a secret theme. Until then it's a greyed-out "???" card with no picture or name. Finding it plays a cutscene in the page; passing 1,000, 10,000, 50,000 and 100,000 words plays a shorter one. Counts stay in the browser (they're never sent anywhere); the unlock is saved to your browser sync. The secret theme isn't on the website, in the File studio or in `catalog.json`. That makes it a surprise, not a lock: the extension's code is open.
+
 ## Office add-in
 
 Install once; the code and the theme list update themselves from the website.

@@ -34,7 +34,7 @@ from PIL import Image
 out,delay=sys.argv[1],int(sys.argv[2]); fr=[Image.open(f).convert("RGB") for f in sys.argv[3:]]
 w,h=fr[0].size; m=Image.new("RGB",(w,h*len(fr)))
 for i,f in enumerate(fr): m.paste(f,(0,h*i))
-pal=m.quantize(colors=int(__import__("os").environ.get("GIF_COLORS","32")),method=Image.Quantize.MEDIANCUT,dither=Image.Dither.NONE)
+pal=m.quantize(colors=int(__import__("os").environ.get("GIF_COLORS","64")),method=Image.Quantize.MEDIANCUT,dither=Image.Dither.NONE)
 q=[f.quantize(palette=pal,dither=Image.Dither.NONE) for f in fr]
 q[0].save(out,save_all=True,append_images=q[1:],duration=delay,loop=0,optimize=True,disposal=1)`;
 const STILL = `import sys

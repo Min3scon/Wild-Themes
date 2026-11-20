@@ -1,6 +1,8 @@
 // Wild Themes — theme catalogue (shared by the in-Word renderer, popup, options page and file tool).
 // mode: dark|light (backdrop brightness). fx: particles thrown from the cursor while typing.
 // doc: palette and fonts written into Word files; dk1/dk2/accent1/accent2 are dark enough to read on the light panel.
+// secret: hidden (locked, greyed out, no preview) until it is found by typing; "secret" comes first so lists that read only
+// entries starting with "name" (the desktop app's tray menu) skip it too.
 self.WW_THEMES = {
   "synthwave": {
     "name": "Synthwave Sunset",
@@ -437,6 +439,53 @@ self.WW_THEMES = {
       "major": "Consolas",
       "minor": "Aptos",
       "panel": "#faf8ff"
+    }
+  },
+  "mexocoder": {
+    "name": "MexoCoder",
+    "emoji": "🌮",
+    "mode": "dark",
+    "blurb": "Fiesta night: papel picado, marigold and mexocoder on repeat",
+    "accent": "#ff2e9a",
+    "accent2": "#ffb02e",
+    "fx": "confetti",
+    "doc": {
+      "dk1": "2A0F1F",
+      "dk2": "5C1A3A",
+      "lt2": "FFF4E6",
+      "accent1": "C2185B",
+      "accent2": "00796B",
+      "accent3": "FF2E9A",
+      "accent4": "FFB02E",
+      "accent5": "00C2B0",
+      "accent6": "D62828",
+      "major": "Georgia",
+      "minor": "Aptos",
+      "panel": "#fffaf2"
+    }
+  },
+  "legendary": {
+    "secret": true,
+    "name": "Legendary",
+    "emoji": "👑",
+    "mode": "dark",
+    "blurb": "Secret theme: molten gold, holographic light. Found by typing",
+    "accent": "#ffd23f",
+    "accent2": "#b388ff",
+    "fx": "star",
+    "doc": {
+      "dk1": "1F1806",
+      "dk2": "4A3A10",
+      "lt2": "FFF8E1",
+      "accent1": "A67C00",
+      "accent2": "6A1B9A",
+      "accent3": "FFD23F",
+      "accent4": "B388FF",
+      "accent5": "26C6DA",
+      "accent6": "E65100",
+      "major": "Garamond",
+      "minor": "Aptos",
+      "panel": "#fffbf0"
     }
   }
 };

@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Wild Themes for Microsoft 365",
   "short_name": "Wild Themes",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "Animated themes for Word, PowerPoint, Excel, Teams and Google Docs on the web, and a tool that saves a theme into any Word, PowerPoint or Excel file so everyone who opens it sees it.",
   "icons": {
     "16": "icons/icon16.png",
@@ -52,6 +52,8 @@
       "js": [
         "lib/themes.js",
         "lib/perf.js",
+        "lib/rewards.js",
+        "cutscene.js",
         "content.js"
       ],
       "css": [

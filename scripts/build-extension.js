@@ -14,7 +14,7 @@ const ROOT = path.join(__dirname, ".."), SRC = path.join(ROOT, "extension");
 const GECKO_ID = "wild-themes@min3scon.github.io", GECKO_MIN = "140.0", GECKO_ANDROID_MIN = "142.0";
 function firefoxManifest(m) {
   const f = JSON.parse(JSON.stringify(m));
-  f.background = { scripts: ["lib/themes.js", "lib/catalog.js", "background.js"] };
+  f.background = { scripts: ["lib/themes.js", "lib/catalog.js", "lib/rewards.js", "background.js"] };
   f.browser_specific_settings = {
     gecko: { id: GECKO_ID, strict_min_version: GECKO_MIN, data_collection_permissions: { required: ["none"] } },
     gecko_android: { strict_min_version: GECKO_ANDROID_MIN },

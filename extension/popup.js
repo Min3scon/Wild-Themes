@@ -1,6 +1,9 @@
-const T = self.WW_THEMES, $ = (s) => document.querySelector(s);
-const DEF = { on: true, theme: "synthwave", motion: "auto", sparks: true, docs: {}, docsDark: "auto", docsClean: true };
-let S = DEF, customs = [], community = [], remote = {}, status = null, scope = "all", filter = "all";
+const T = self.WW_THEMES, RW = self.WWRewards, $ = (s) => document.querySelector(s);
+const DEF = { on: true, theme: "synthwave", motion: "auto", sparks: true, docs: {}, docsDark: "auto", docsClean: true, found: {} };
+let S = DEF, customs = [], community = [], remote = {}, status = null, scope = "all", filter = "all", words = {}, revealed = true, revealAt = 0, tab = null;
+const found = (id) => !T[id] || !T[id].secret || !!(S.found || {})[id];       // a secret theme is listed once it's been found
+const n = (x) => Number(x || 0).toLocaleString();
+const short = (x) => new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 }).format(x);
 
 const current = () => (scope === "doc" && status && status.docKey && S.docs[status.docKey]) || S.theme;
 const lookup = (id) => T[id] || remote[id] || customs.find((c) => c.id === id) || community.find((c) => c.id === id);
@@ -25,8 +28,38 @@ function card(id, name, thumb) {
   img.onerror = () => { const t = lookup(id); img.removeAttribute("src"); if (t) img.style.background = `linear-gradient(135deg,${t.accent},${t.accent2 || t.accent})`; };
   const s = document.createElement("span"); s.textContent = name;
   b.append(img, s);
+  if (words[id] > 0) {                                           // words typed in this theme
+    const w = document.createElement("em"); w.className = "wc"; w.textContent = short(words[id]);
+    w.title = `${n(words[id])} words typed in ${name}`; b.title = `${name} · ${n(words[id])} words typed`;
+    b.append(w);
+  }
+  if (T[id] && T[id].secret) b.classList.add("legend");
   b.onclick = () => choose(id);
   return b;
+}
+// The secret theme before it's found: greyed out, no picture, no name. A click only says how to find it.
+function lockedCard() {
+  const b = document.createElement("button");
+  b.className = "card locked"; b.dataset.id = "locked"; b.setAttribute("aria-disabled", "true");
+  b.title = `Locked. Every word you type with a theme on has a 1 in ${n(RW.ODDS)} chance to unlock it.`;
+  const d = document.createElement("div"); d.className = "lockimg"; d.textContent = "?";
+  const s = document.createElement("span"); s.textContent = "???";
+  b.append(d, s);
+  b.onclick = () => {
+    b.animate([{ transform: "none" }, { transform: "rotate(-4deg)" }, { transform: "rotate(4deg)" }, { transform: "rotate(-2deg)" }, { transform: "none" }], { duration: 400 });
+    $("#wnote").textContent = `🔒 A secret theme. Keep typing: every word has a 1 in ${n(RW.ODDS)} chance to unlock it. Pasted text doesn't count.`;
+  };
+  return b;
+}
+// Words typed, the next milestone and, once found, the secret theme
+function stats() {
+  const total = RW.total(words), got = RW.passed(total), nx = RW.next(total), f = (S.found || {})[RW.SECRET], st = T[RW.SECRET];
+  $("#wtotal").textContent = n(total);
+  $("#wbadges").textContent = got.map((m) => m.emoji).join(" ");
+  $("#wbadges").title = got.map((m) => `${m.name}: ${n(m.at)} words`).join("\n");
+  $("#wnote").textContent = nx ? `${n(nx.at - total)} more to ${nx.emoji} ${nx.name}. Pasted text doesn't count.` : "Every milestone passed. Pasted text doesn't count.";
+  $("#wfound").hidden = !f || !st;
+  if (f && st) $("#wfoundtext").textContent = `${st.emoji} ${st.name} found after ${n(f.words)} words.`;
 }
 
 function render() {
@@ -40,9 +73,10 @@ function render() {
   $("#scope-doc").setAttribute("aria-checked", scope === "doc");
   $("#scope-all").setAttribute("aria-checked", scope === "all");
   const grid = $("#grid"); grid.textContent = "";
-  const items = filter === "custom" || filter === "community" ? [] : Object.entries(T).filter(([, v]) => filter === "all" || v.mode === filter)
+  const items = filter === "custom" || filter === "community" ? [] : Object.entries(T).filter(([id, v]) => found(id) && (filter === "all" || v.mode === filter))
     .map(([id, v]) => card(id, v.name, `previews/${id}.webp`))
     .concat(Object.entries(remote).filter(([, v]) => filter === "all" || v.mode === filter).map(([id, v]) => card(id, v.name, v.preview)));
+  if (filter === "all" && !found(RW.SECRET)) items.push(lockedCard());
   if (filter === "all" || filter === "community") for (const c of community) items.push(card(c.id, c.name, c.thumb));
   if (filter === "all" || filter === "custom") for (const c of customs) items.push(card(c.id, c.name, c.thumb));
   if (!items.length) {
@@ -53,6 +87,15 @@ function render() {
   }
   grid.append(...items);
   for (const c of grid.querySelectorAll(".card")) c.setAttribute("aria-checked", c.dataset.id === current());
+  stats();
+  // the first time the popup opens after the secret theme was found, its card turns over from the locked one
+  const lg = grid.querySelector(`.card[data-id="${RW.SECRET}"]`);
+  if (lg && !revealed) {
+    revealed = true; revealAt = performance.now(); chrome.storage.local.set({ revealed: RW.SECRET });
+    lg.scrollIntoView({ block: "nearest" });
+  }
+  // the grid is redrawn as the popup fills in: carry on the animation where it was, don't restart it
+  if (lg && revealAt) { lg.classList.add("reveal"); lg.style.animationDelay = -(performance.now() - revealAt) + "ms"; }
 }
 
 const open = (hash) => chrome.tabs.create({ url: chrome.runtime.getURL("options.html#" + hash) });
@@ -64,11 +107,17 @@ $("#scope-doc").onclick = () => { scope = "doc"; render(); };
 $("#scope-all").onclick = () => { scope = "all"; render(); };
 $("#save-file").onclick = () => open("file");
 $("#customs").onclick = () => open("custom");
+$("#wreplay").onclick = () => tab && chrome.tabs.sendMessage(tab.id, { cutscene: "secret" }, () => { void chrome.runtime.lastError; window.close(); });
+// typing in another window while this is open: keep the counts current
+chrome.storage.onChanged.addListener((c, area) => {
+  if (area === "local" && c.words) { words = c.words.newValue || {}; render(); }
+  if (area === "sync" && c.found) { S.found = c.found.newValue || {}; render(); }
+});
 
 chrome.storage.sync.get(DEF, (v) => {
   S = { ...DEF, ...v };
-  chrome.storage.local.get(["customs", "community", "remote", "catalog"], (c) => {
-    customs = c.customs || []; community = c.community || []; remote = c.remote || {};
+  chrome.storage.local.get(["customs", "community", "remote", "catalog", "words", "revealed"], (c) => {
+    customs = c.customs || []; community = c.community || []; remote = c.remote || {}; words = c.words || {}; revealed = c.revealed === RW.SECRET;
     render();
     // new themes from the website: refresh the list if it's more than an hour old
     if (!c.catalog || Date.now() - c.catalog.at > 3600e3) chrome.runtime.sendMessage({ sync: 1 }, () => chrome.storage.local.get(["community", "remote"], (n) => {
@@ -76,8 +125,8 @@ chrome.storage.sync.get(DEF, (v) => {
       community = n.community || []; remote = n.remote || {}; render();
     }));
     // ask the open Word document which file it is and whether the file carries a theme
-    chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
-      if (!tab) return;
+    chrome.tabs.query({ active: true, currentWindow: true }, ([tb]) => {
+      if (!(tab = tb)) return;
       chrome.tabs.sendMessage(tab.id, "ww-status", (r) => {
         if (chrome.runtime.lastError || !r || !r.docKey) return;
         status = r; scope = "doc";
