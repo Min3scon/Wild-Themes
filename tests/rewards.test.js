@@ -30,7 +30,8 @@ test("which key presses make words", () => {
   assert.equal(k("Shift"), ""); assert.equal(k("ArrowLeft"), ""); assert.equal(k("Backspace"), "");
   assert.equal(k("ą", { ctrlKey: true, altKey: true, altGr: true }), "char", "AltGr letters count (Polish, German...)");
   assert.equal(RW.ODDS, 37500); assert.equal(RW.SECRET, "legendary");
-  assert.deepEqual(Array.from(RW.MILESTONES, (m) => m.at), [1000, 10000, 50000, 100000]);
+  assert.deepEqual(Array.from(RW.MILESTONES, (m) => m.at), [1000, 10000, 50000, 67000, 100000]);
+  assert.equal(RW.next(50000).id, "w67k"); assert.equal(RW.next(50000).cutscene, "67", "67,000 words has its own cutscene");
   assert.equal(RW.next(9999).id, "w10k"); assert.equal(RW.passed(10000).length, 2); assert.equal(RW.next(1e6), null);
 });
 
@@ -83,6 +84,13 @@ test("background: one roll per word at 1 in 37,500; found once, kept in sync sto
   let wins = 0; const u = new Uint32Array(1);
   for (let i = 0; i < 1e6; i++) { dice.getRandomValues(u); if (u[0] / 4294967296 < 1 / RW.ODDS) wins++; }
   assert.ok(wins > 8 && wins < 50, "wins in a million: " + wins);
+});
+
+test("background: the 67,000th word earns the six-seven milestone", async () => {
+  const b = background(() => 0.5);
+  b.store.local.words = { synthwave: 50000, winter: 16990 };
+  let r = await b.send({ words: 9, theme: "winter" }); assert.ok(!r.badge); assert.equal(r.total, 66999);
+  r = await b.send({ words: 1, theme: "winter" }); assert.equal(r.badge, "w67k"); assert.equal(r.total, 67000);
 });
 
 test("the secret theme isn't on the website, in the File studio or in the live catalogue; it ships inside the extension", () => {
@@ -226,6 +234,31 @@ test("in the real extension: typing counts, paste doesn't; the locked card; the 
       await pg.waitForTimeout(1500);
       await pg.screenshot({ path: path.join(H.OUT, "cutscene-milestone.png") });
       await pg.waitForSelector("#ww-cut", { state: "detached", timeout: 8000 });
+      await pg.close();
+    });
+
+    await t.test("67,000 words: 67 copies of \"67\" all over the screen, the 6 and the 7 bobbing, gone by itself", async () => {
+      await sw.evaluate(() => chrome.storage.local.set({ words: { legendary: 66998 } }));
+      const pg = await word();
+      await pg.waitForSelector('#ww-bg[data-scene="legendary"]', { state: "attached", timeout: 15000 });
+      await pg.click("#page");
+      await pg.keyboard.type("six seven ");
+      await pg.waitForSelector('#ww-cut[data-kind="67"]', { state: "attached", timeout: 9000 });
+      const v = await pg.$eval("#ww-cut", (n) => ({ spam: [...n.querySelectorAll(".wwc-67")].map((s) => s.textContent), big: n.querySelector(".wwc-67big").textContent,
+        text: n.querySelector(".wwc-ribbon").textContent, pe: getComputedStyle(n).pointerEvents }));
+      assert.equal(v.spam.length, 67, "sixty-seven of them"); assert.ok(v.spam.every((s) => s === "67"));
+      assert.equal(v.big, "6🤲7"); assert.match(v.text, /SIX SEVEN.*67,000 words typed/);
+      assert.equal(v.pe, "none", "doesn't block the page");
+      await pg.waitForTimeout(2600);                                    // all 67 are out
+      const spread = await pg.$$eval("#ww-cut .wwc-67", (a) => a.map((s) => { const r = s.getBoundingClientRect(); return [r.left + r.width / 2 < innerWidth / 2, r.top + r.height / 2 < innerHeight / 2, +getComputedStyle(s).opacity]; }));
+      assert.ok(spread.every((s) => s[2] > .9), "all visible");
+      for (const q of [[true, true], [false, true], [true, false], [false, false]]) assert.ok(spread.some((s) => s[0] === q[0] && s[1] === q[1]), "in every corner of the screen");
+      const bob = await pg.$eval("#ww-cut .wwc-six", (n) => n.getAnimations().map((a) => a.playState));
+      assert.deepEqual(bob, ["running"], "the 6 and the 7 take turns going up and down");
+      await pg.keyboard.type("still typing ");
+      assert.match(await pg.$eval("#page", (n) => n.textContent), /six seven still typing/, "typing carries on underneath");
+      await pg.screenshot({ path: path.join(H.OUT, "cutscene-67.png") });
+      await pg.waitForSelector("#ww-cut", { state: "detached", timeout: 9000 });
       await pg.close();
     });
   } finally { await ctx.close(); }

@@ -346,7 +346,7 @@
     if (r.secret && s) self.WWCut.secret({ ...s, words: r.total, odds: RW.ODDS, calm: calm(), use: () => chrome.storage.sync.set({ theme: RW.SECRET, on: true }) });
     else if (r.badge) {
       const m = RW.MILESTONES.find((x) => x.id == r.badge);
-      if (m) self.WWCut.badge({ ...m, total: r.total, accent: t ? t.accent : s.accent, accent2: t ? t.accent2 : s.accent2, calm: calm() });
+      if (m) self.WWCut[m.cutscene == "67" ? "sixSeven" : "badge"]({ ...m, total: r.total, accent: t ? t.accent : s.accent, accent2: t ? t.accent2 : s.accent2, calm: calm() });
     }
   };
 

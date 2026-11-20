@@ -10,6 +10,7 @@ self.WWRewards = {
     { at: 1000, id: "w1k", name: "Warmed up", emoji: "🔥" },
     { at: 10000, id: "w10k", name: "Wordsmith", emoji: "✒️" },
     { at: 50000, id: "w50k", name: "Novelist", emoji: "📚" },
+    { at: 67000, id: "w67k", name: "Six seven", emoji: "🤲", cutscene: "67" },   // its own cutscene: "67" all over the screen
     { at: 100000, id: "w100k", name: "Keyboard legend", emoji: "🏆" },
   ],
   // What a key press does to the word being typed: "char" (a letter or digit: inside a word), "end" (a space, Enter, Tab or
