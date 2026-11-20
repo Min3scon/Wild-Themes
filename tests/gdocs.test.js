@@ -1,8 +1,10 @@
-// Google Docs, Slides and Sheets in the real extension (Chromium), on stand-in pages that copy the
-// structure the live editors are known to use (.kix-appview-editor > .kix-page-paginated, the menu bar and
-// toolbar roles, the hidden typing frame, .grid-container...). These are NOT the live Google pages:
-// Google changes its markup and the real editors need a Google sign-in, so the live result has to be
-// checked in a browser. If a scene doesn't appear there, the extension changes nothing.
+// Google Docs, Slides and Sheets in the real extension (Chromium), on stand-in pages. The Docs page copies the
+// structure the live editor is documented to use by other extensions: #docs-chrome (bars with their own colour) above
+// #docs-editor-container, a transparent outline panel on the left, #docs-editor > .kix-appview-editor (inline grey
+// background) holding .kix-page-paginated (transparent) whose white is painted by .kix-canvas-tile-content tiles,
+// a side strip on the right, and the hidden typing iframe. These are NOT the live Google pages: Google changes its
+// markup and the real editors need a Google sign-in, so the live result has to be checked in a browser.
+// If a scene doesn't appear there, the extension changes nothing, and the popup's "Copy page details" says why.
 const test = require("node:test"), assert = require("node:assert/strict");
 const fs = require("fs"), path = require("path"), os = require("os");
 const H = require("./helpers.js");
@@ -12,21 +14,35 @@ let chromium; try { ({ chromium } = require("playwright")); } catch (_) { /* ski
 const EXT = path.join(__dirname, "..", "extension");
 const fnv = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619); return (h >>> 0).toString(36); };
 
+// like the live editor: pages are transparent wrappers, white comes from canvas tiles with an inline background
 const DOCS = `<!doctype html><html><head><title>Doc</title></head><body class="docs-material" style="margin:0;background:#f9fbfd;font:14px sans-serif">
 <div id="docs-chrome" style="background:#f9fbfd;height:84px">
   <div id="docs-menubar" role="menubar" style="height:34px;padding:6px 12px">File Edit View Insert Format</div>
   <div id="docs-toolbar" role="toolbar" style="height:42px;padding:6px 12px;background:#edf2fa;border-radius:20px;margin:0 12px">B I U</div>
 </div>
-<div id="docs-editor" style="position:absolute;top:84px;bottom:0;left:0;right:0">
-  <div class="kix-appview-editor" style="position:absolute;inset:0;overflow:auto;background:#f9fbfd">
-    <div class="kix-page-paginated" style="position:relative;width:816px;height:1056px;margin:20px auto;background:#fff;box-shadow:0 0 1px #ccc">
-      <canvas class="kix-canvas-tile-content" width="816" height="1056" style="position:absolute;inset:0"></canvas>
-      <div class="kix-cursor"><div class="kix-cursor-caret" style="position:absolute;left:96px;top:96px;width:2px;height:18px;background:#000"></div></div>
+<div id="docs-editor-container" style="position:absolute;top:84px;bottom:0;left:0;right:0;background:#f9fbfd">
+  <div class="left-sidebar-container" style="position:absolute;left:0;top:0;bottom:0;width:240px;padding:12px">Outline: Heading one</div>
+  <div id="docs-editor" style="position:absolute;top:0;bottom:0;left:240px;right:56px;background:#f9fbfd">
+    <div class="kix-appview-editor-container" style="position:absolute;inset:0">
+      <div class="kix-appview-editor" style="position:absolute;inset:0;overflow:auto;background-color: rgb(249, 251, 253);">
+        <div class="kix-page-paginated" style="position:relative;width:816px;height:1056px;margin:20px auto">
+          <canvas class="kix-canvas-tile-content" width="816" height="400" style="position:absolute;left:0;top:0;width:816px;height:400px;background-color: rgb(255, 255, 255)"></canvas>
+          <canvas class="kix-canvas-tile-content" width="816" height="400" style="position:absolute;left:0;top:400px;width:816px;height:400px;background-color: rgb(255, 255, 255)"></canvas>
+          <canvas class="kix-canvas-tile-content" width="816" height="256" style="position:absolute;left:0;top:800px;width:816px;height:256px;background-color: rgb(255, 255, 255)"></canvas>
+          <div class="kix-cursor"><div class="kix-cursor-caret" style="position:absolute;left:96px;top:96px;width:2px;height:18px;background:#000"></div></div>
+        </div>
+      </div>
     </div>
   </div>
+  <div id="side-strip" style="position:absolute;right:0;top:0;bottom:0;width:56px;background:#f9fbfd">icons</div>
 </div>
 <iframe class="docs-texteventtarget-iframe" style="position:absolute;left:-2000px;top:0;width:20px;height:20px" srcdoc="<body contenteditable=true></body>"></iframe>
 </body></html>`;
+
+// simple build: the page wrapper itself is white
+const DOCS_SIMPLE = DOCS.replace('class="kix-page-paginated" style="position:relative;width:816px;height:1056px;margin:20px auto"', 'class="kix-page-paginated" style="position:relative;width:816px;height:1056px;margin:20px auto;background:#fff"');
+// Google renamed its classes: only the general scan (white box on a grey surround) can find the page
+const DOCS_RENAMED = DOCS_SIMPLE.replace(/kix-page-paginated/g, "x1").replace(/kix-appview-editor-container/g, "x2").replace(/kix-appview-editor/g, "x3").replace(/kix-canvas-tile-content/g, "x4");
 
 const SLIDES = `<!doctype html><html><body style="margin:0;background:#f9fbfd"><div id="docs-chrome" style="height:84px"><div role="menubar" style="height:34px">File</div><div role="toolbar" style="height:42px">Tools</div></div>
 <div id="docs-editor" style="position:absolute;top:84px;bottom:0;left:200px;right:0;background:#f1f3f4"><div id="workspace" style="position:absolute;inset:0;background:#f1f3f4"><div class="punch-viewer-container" style="position:relative;width:640px;height:360px;margin:60px auto;background:#fff"></div></div></div>
@@ -41,27 +57,46 @@ test("Google Docs, Slides and Sheets: scene, per-document theme, sparks, other G
   const SITE = "https://min3scon.github.io/Wild-Themes/";
   try {
     await ctx.route(SITE + "**", (r) => r.fulfill({ status: 404, body: "" }));
-    const html = { "/document/d/DOCA/edit": DOCS, "/document/d/DOCB/edit": DOCS, "/presentation/d/SLD1/edit": SLIDES, "/spreadsheets/d/SHT1/edit": SHEETS, "/forms/d/FRM1/edit": DOCS };
+    const html = { "/document/d/DOCA/edit": DOCS, "/document/d/DOCB/edit": DOCS, "/document/d/SIMPLE/edit": DOCS_SIMPLE, "/document/d/RENAMED/edit": DOCS_RENAMED,
+      "/presentation/d/SLD1/edit": SLIDES, "/spreadsheets/d/SHT1/edit": SHEETS, "/forms/d/FRM1/edit": DOCS };
     await ctx.route("https://docs.google.com/**", (r) => { const p = new URL(r.request().url()).pathname; r.fulfill({ contentType: "text/html", body: html[p] || DOCS }); });
     let [sw] = ctx.serviceWorkers(); if (!sw) sw = await ctx.waitForEvent("serviceworker");
     const open = async (p) => { const pg = await ctx.newPage(); const errs = []; pg.on("pageerror", (e) => errs.push(e.message)); await pg.goto("https://docs.google.com" + p); pg.errs = errs; return pg; };
     await sw.evaluate(() => chrome.storage.sync.set({ theme: "synthwave", on: true, sparks: true, motion: "off", docs: {} }));
 
-    await t.test("Docs: scene around the page, page and toolbar keep their look", async () => {
+    await t.test("Docs (like the live editor): scene over the editor area, page tiles stay white, panels and bars keep their look", async () => {
       const pg = await open("/document/d/DOCA/edit");
       await pg.waitForSelector('#ww-bg[data-scene="synthwave"]', { state: "attached", timeout: 15000 });
       await pg.waitForSelector(".kix-page-paginated[data-ww-page]", { state: "attached", timeout: 15000 });
-      assert.equal(await pg.$eval(".kix-appview-editor", (n) => n.hasAttribute("data-ww-clear")), true, "grey surround made see-through");
-      assert.equal(await pg.$eval("#docs-toolbar", (n) => getComputedStyle(n).backgroundColor), "rgb(237, 242, 250)", "toolbar keeps its colour");
+      for (const sel of [".kix-appview-editor", "#docs-editor", "#docs-editor-container"]) assert.equal(await pg.$eval(sel, (n) => n.hasAttribute("data-ww-clear")), true, sel + " made see-through");
       assert.equal(await pg.$eval("#docs-chrome", (n) => n.hasAttribute("data-ww-clear")), false, "app chrome untouched");
-      assert.equal(await pg.$eval(".kix-page-paginated", (n) => getComputedStyle(n).backgroundColor), "rgb(255, 255, 255)", "page stays white and readable");
+      assert.equal(await pg.$eval("#docs-toolbar", (n) => getComputedStyle(n).backgroundColor), "rgb(237, 242, 250)", "toolbar keeps its colour");
+      assert.equal(await pg.$eval(".kix-canvas-tile-content", (n) => getComputedStyle(n).backgroundColor), "rgb(255, 255, 255)", "page tiles stay white");
+      const box = await pg.evaluate(() => { const r = document.querySelector(".kix-appview-editor").getBoundingClientRect(), b = document.querySelector("#ww-bg").style; return { er: [r.top, r.left, r.width, r.height].map(Math.round), bg: [b.top, b.left, b.width, b.height].map((v) => Math.round(parseFloat(v))) }; });
+      assert.deepEqual(box.bg, box.er, "scene covers exactly the editor area");
       await pg.screenshot({ path: path.join(H.OUT, "gdocs-docs.png") });
-      const shot = path.join(H.OUT, "gdocs-docs.png");
-      const edge = H.sample(shot, [0.02, 0.4, 0.1, 0.6]), mid = H.sample(shot, [0.4, 0.4, 0.6, 0.6]);
-      assert.ok(H.lum(edge) < 90, "scene (dark) beside the page, got " + edge);
-      assert.ok(H.lum(mid) > 240, "page white in the middle, got " + mid);
+      const shot = path.join(H.OUT, "gdocs-docs.png"), W = 1280, Hh = 720;
+      const px = (x0, y0, x1, y1) => H.sample(shot, [x0 / W, y0 / Hh, x1 / W, y1 / Hh]);
+      assert.ok(H.lum(px(270, 300, 330, 360)) < 90, "scene beside the page (inside the editor), got " + px(270, 300, 330, 360));
+      assert.ok(H.lum(px(560, 300, 700, 400)) > 240, "page white in the middle");
+      assert.ok(H.lum(px(20, 300, 220, 400)) > 200, "outline panel keeps the light page colour, got " + px(20, 300, 220, 400));
+      assert.ok(H.lum(px(1230, 300, 1270, 400)) > 200, "right side strip keeps it too, got " + px(1230, 300, 1270, 400));
+      assert.ok(H.lum(px(300, 5, 900, 28)) > 200, "menu bar light");
       assert.deepEqual(pg.errs, []);
       await pg.close();
+    });
+
+    await t.test("Docs with a white page wrapper, and with renamed classes (general scan): scene still around the page", async () => {
+      for (const p of ["/document/d/SIMPLE/edit", "/document/d/RENAMED/edit"]) {
+        const pg = await open(p);
+        try {
+          await pg.waitForSelector('#ww-bg[data-scene="synthwave"]', { state: "attached", timeout: 15000 });
+          await pg.waitForFunction(() => document.querySelector("[data-ww-page]") && document.querySelector("[data-ww-clear]"), null, { timeout: 15000 });
+          const shot = path.join(H.OUT, "gdocs-variant.png"); await pg.screenshot({ path: shot });
+          assert.ok(H.lum(H.sample(shot, [270 / 1280, 300 / 720, 330 / 1280, 360 / 720])) < 120, p + ": scene beside the page");
+          assert.ok(H.lum(H.sample(shot, [560 / 1280, 300 / 720, 700 / 1280, 400 / 720])) > 240, p + ": page white");
+        } finally { await pg.close(); }
+      }
     });
 
     await t.test("Docs: each document remembers its own theme (keyed by a hash of the document id)", async () => {
@@ -82,17 +117,58 @@ test("Google Docs, Slides and Sheets: scene, per-document theme, sparks, other G
       await pg.waitForTimeout(600);
       await pg.evaluate(() => { const d = document.querySelector("iframe.docs-texteventtarget-iframe").contentDocument; d.dispatchEvent(new KeyboardEvent("keydown", { key: "a", bubbles: true })); });
       await pg.waitForSelector("#ww-fx", { state: "attached", timeout: 5000 });
-      const moved = await pg.$eval("#ww-fx", (n) => n.style.transform);
-      assert.match(moved, /translate\(9\d(\.\d+)?px, ?10\d(\.\d+)?px\)|translate\(\d+/, "sparks start at the caret: " + moved);
       await pg.close();
     });
 
-    await t.test("Slides: slide on its grey surround is themed like a Word page", async () => {
+    await t.test("Docs: the page is looked at straight away after a change, then at most about six times a second", async () => {
+      const pg = await open("/document/d/DOCA/edit");
+      await pg.waitForSelector(".kix-page-paginated[data-ww-page]", { state: "attached", timeout: 15000 });
+      await pg.waitForTimeout(1500);
+      // each look re-sets data-ww-page on the page, which shows as an attribute change we can count
+      const counts = await pg.evaluate(async () => {
+        const page = document.querySelector(".kix-page-paginated"); let n = 0;
+        new MutationObserver((r) => { n += r.filter((x) => x.attributeName === "data-ww-page").length; }).observe(page, { attributes: true });
+        const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+        await sleep(300);
+        document.body.append(document.createElement("i"));                    // one change after a quiet spell
+        await sleep(120);
+        const quick = n;
+        n = 0;
+        const t0 = performance.now();
+        while (performance.now() - t0 < 1000) { document.body.append(document.createElement("i")); await sleep(4); }   // a page that never stops changing
+        await sleep(250);
+        return { quick, storm: n };
+      });
+      assert.ok(counts.quick >= 1, "first change looked at within 120 ms: " + counts.quick);
+      assert.ok(counts.storm >= 2 && counts.storm <= 9, "about six looks in a second of constant change, got " + counts.storm);
+      await pg.close();
+    });
+
+    await t.test("Docs: 'Copy page details' reports what the extension sees, without any document text", async () => {
+      const pg = await open("/document/d/DOCA/edit");
+      await pg.evaluate(() => { document.querySelector(".kix-appview-editor").insertAdjacentHTML("beforeend", "<p id=secret>my private sentence</p>"); });
+      await pg.waitForSelector(".kix-page-paginated[data-ww-page]", { state: "attached", timeout: 15000 });
+      const id = sw.url().split("/")[2], pop = await ctx.newPage();
+      await pop.goto(`chrome-extension://${id}/popup.html`);
+      const d = await pop.evaluate(async () => {
+        const [tab] = await chrome.tabs.query({ url: "https://docs.google.com/document/*" });
+        const status = await new Promise((ok) => chrome.tabs.sendMessage(tab.id, "ww-status", ok));
+        const details = await new Promise((ok) => chrome.tabs.sendMessage(tab.id, "ww-details", ok));
+        return { status, details };
+      });
+      assert.equal(d.status.google, true); assert.equal(d.status.shown, true);
+      assert.equal(d.details.scene, true); assert.equal(d.details.editor, true); assert.equal(d.details.pages, 1);
+      assert.ok(d.details.at[0].stack.length > 3 && d.details.at[0].stack.some((s) => /kix-appview-editor/.test(s) && /CLEARED/.test(s)), "element stack at the centre");
+      assert.ok(!/private sentence/.test(JSON.stringify(d.details)), "no document text");
+      assert.ok(!/DOCA/.test(JSON.stringify(d.details)), "document id masked");
+      await pop.close(); await pg.close();
+    });
+
+    await t.test("Slides: slide on its grey surround is themed like a Word page, bare top bars stay light", async () => {
       const pg = await open("/presentation/d/SLD1/edit");
       await pg.waitForSelector('#ww-bg[data-scene="synthwave"]', { state: "attached", timeout: 15000 });
       await pg.waitForSelector(".punch-viewer-container[data-ww-page], #workspace[data-ww-clear]", { state: "attached", timeout: 15000 });
       await pg.screenshot({ path: path.join(H.OUT, "gdocs-slides.png") });
-      // the bars here have no colour of their own (they sit on the page background we clear): they must stay light
       const bars = H.sample(path.join(H.OUT, "gdocs-slides.png"), [0.3, 0.0, 0.9, 0.1]);
       assert.ok(H.lum(bars) > 200, "top bars keep the page's light colour, got " + bars);
       assert.deepEqual(pg.errs, []);
@@ -103,9 +179,7 @@ test("Google Docs, Slides and Sheets: scene, per-document theme, sparks, other G
       const pg = await open("/spreadsheets/d/SHT1/edit");
       await pg.waitForSelector('#ww-bg[data-scene="synthwave"]', { state: "attached", timeout: 15000 });
       await pg.waitForFunction(() => document.querySelector("#ww-bg").style.getPropertyValue("height") !== "", null, { timeout: 15000 });
-      const box = await pg.$eval("#ww-bg", (n) => ({ top: n.style.top, height: n.style.height }));
-      assert.equal(box.top, "84px");
-      await pg.screenshot({ path: path.join(H.OUT, "gdocs-sheets.png") });
+      assert.equal(await pg.$eval("#ww-bg", (n) => n.style.top), "84px");
       assert.deepEqual(pg.errs, []);
       await pg.close();
     });

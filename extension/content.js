@@ -43,8 +43,45 @@
         colors: [file.mode == "light" ? "#f4f1ff" : "#0d0b1a", file.accent, file.accent2] }]
       : T[S.theme] ? [S.theme, T[S.theme]] : [];
   };
-  const still = () => S.motion == "off" || (S.motion == "auto" && (matchMedia("(prefers-reduced-motion:reduce)").matches ||
+  // Smoothness guard (Auto only): the scene's real frame rate is measured; if this device can't keep up, the big
+  // or 3D layers stop first (level 1: "lite"), then everything (level 2). The verdict is remembered per device.
+  let level = 0, bad = 0, gt = 0;
+  const lite = () => S.motion == "auto" && level >= 1;
+  const still = () => S.motion == "off" || (S.motion == "auto" && (level >= 2 || matchMedia("(prefers-reduced-motion:reduce)").matches ||
     navigator.hardwareConcurrency <= 2 || navigator.deviceMemory <= 2));
+
+  const sample = (ms) => new Promise((ok) => {                       // frame gaps over ms; null if the tab was hidden meanwhile
+    const t0 = [];
+    const tick = (now) => {
+      if (D.hidden) return ok(null);
+      t0.push(now);
+      if (now - t0[0] >= ms) return ok(t0.slice(1).map((x, i) => x - t0[i]));
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+  // Layers that are huge, or that rotate, scale or use perspective, cost the most to draw: those are the ones level 1 holds still.
+  const markHeavy = () => bg && [...bg.children].forEach((i) => {
+    let heavy = i.offsetWidth * i.offsetHeight > 2.2 * innerWidth * innerHeight;
+    try { heavy = heavy || i.getAnimations().some((a) => /rotate|perspective|scale/.test(JSON.stringify(a.effect.getKeyframes().map((k) => k.transform)))); } catch (_) { /* no animation info */ }
+    i.toggleAttribute("data-heavy", heavy);
+  });
+  const guard = (ms) => {
+    clearTimeout(gt);
+    gt = setTimeout(async () => {
+      if (!bg || S.motion != "auto" || still()) return;
+      if (D.hidden) return void D.addEventListener("visibilitychange", () => guard(3000), { once: true });
+      const gaps = await sample(2000);
+      if (!gaps) return guard(3000);
+      if (!WWPerf.judge(gaps, 2000)) { bad = 0; return; }
+      if (++bad < 2) return guard(5000);                                 // a page that's still loading drops frames: look once more
+      bad = 0; level++;
+      if (level == 1) markHeavy();
+      chrome.storage.local.set({ perf: { level, at: Date.now() } });
+      apply();
+      if (level < 2) guard(4000);
+    }, ms);
+  };
 
   // Don't show anything until we know which theme applies: in Word/PowerPoint a theme saved in
   // the file only shows up once the page is drawn, and showing the default first made it flash.
@@ -79,8 +116,11 @@
       H_.append(bg);
       H_.style.cssText += `;--ww-a:${t.accent};--ww-edge:${t.accent}88;--ww-glow:${t.accent}55;--ww-base:${t.custom ? t.colors && t.colors[0] : t.mode == "light" ? "#f3eefa" : "#08060f"}`;
       H_.dataset.ww = id;
+      guard(3000);
     }
     if (!bg) return;                                                // nothing shown yet (still waiting)
+    if (lite()) markHeavy();
+    bg.classList.toggle("lite", lite());
     bg.classList.toggle("still", still());
     scan();
   }
@@ -164,11 +204,31 @@
     return shell0;
   };
 
+  // Google Docs (print layout). Its pages are white tiles inside .kix-appview-editor (the scrolling area), which sits
+  // between the app's own bars and side panels. The scene covers that area only, the page keeps its own white, and
+  // everything outside the area looks as before because the page's own colour is painted behind it by html.
+  function scanDocs() {
+    const ed = D.querySelector(".kix-appview-editor"), er = ed && ed.getBoundingClientRect();
+    const pg = [...D.querySelectorAll(".kix-page-paginated")];
+    if (!er || er.width * er.height < 1e5 || !pg.length) return false;     // pageless, or Google changed the layout: the general scan tries
+    const base = shellColour();
+    for (let a = ed; a && a != D.body && a != H_; a = a.parentElement) if (a.hasAttribute("data-ww-clear") || solid(a)) ATTR(a, "data-ww-clear", "");
+    if (base) H_.style.setProperty("--ww-base", base, "important");
+    bg.style.setProperty("inset", "auto", "important");
+    for (const [k, v] of [["top", er.top], ["left", er.left], ["width", er.width], ["height", er.height]]) bg.style.setProperty(k, v + "px", "important");
+    bg.classList.remove("veil");
+    pages.forEach((p) => pg.includes(p) || ATTR(p, "data-ww-page"));
+    pg.forEach((p) => ATTR(p, "data-ww-page", ""));
+    pages = pg;
+    return true;
+  }
+
   function scan() {
     hookTyping();
     if (!bg) return;
     if (!bg.isConnected) H_.append(bg);
     if (app == "pane") return scanPane();
+    if (GK == "document" && scanDocs()) return;
     const W = innerWidth, H = innerHeight, bars = [...D.querySelectorAll("[role=tablist],[role=toolbar],[role=menubar]")];
     let rb = 0, plate = "";
     for (const n of bars) { const r = n.getBoundingClientRect(); if (r.width > 40 && r.top < H * .4 && r.bottom > rb) rb = r.bottom; }
@@ -181,8 +241,8 @@
         if (r.width > W * .92) break;
         if (r.width < 260 || r.height < 110 || r.top < rb - 4 || n.hasAttribute("data-ww-clear") || !solid(n)) continue;
         const u = st.slice(i + 1).find(solid), ur = u ? u.getBoundingClientRect() : { left: 0, right: W };
-        if (r.left - ur.left > 7 && ur.right - r.right > 7 && !found.includes(n)) found.push(n);
-        break;
+        if (r.left - ur.left > 7 && ur.right - r.right > 7) { if (!found.includes(n)) found.push(n); break; }
+        // no wider box behind it: this is a layer inside the page (Google Docs draws its white in tiles), try the box around it
       }
     }
     const pg = found.filter((p) => !found.some((q) => q != p && p.contains(q)));
@@ -193,7 +253,8 @@
       const pr = pg.map((p) => p.getBoundingClientRect());
       // canvas = solid boxes beside the page that contain it; if one also holds the ribbon,
       // a plate in its colour goes behind the ribbon so the ribbon stays solid
-      for (const x of [W * .03, W * .97]) for (let y = rb + 20; y < H - 10; y += (H - rb) / 4) {
+      // beside the page as well as at the window's edges: side panels can sit between the edge and the page's backdrop
+      for (const x of [W * .03, W * .97, ...pr.flatMap((r) => [r.left - 12, r.right + 12])].filter((x) => x > 1 && x < W - 1)) for (let y = rb + 20; y < H - 10; y += (H - rb) / 4) {
         if (pr.some((r) => x >= r.left && x <= r.right && y >= r.top && y <= r.bottom)) continue;
         for (const n of D.elementsFromPoint(x, y)) {
           if (!ok(n) || pg.includes(n) || !solid(n) || !pg.some((p) => n.contains(p))) continue;
@@ -263,12 +324,35 @@
   addEventListener("scroll", () => later(400), { capture: true, passive: true });
   // Teams and Word swap whole panes without reloading (new chat, channel, tab): look again right away
   // throttled to one check per frame (not pushed back while Teams keeps redrawing), so a new pane is themed at once
-  let frame = 0;
-  new MutationObserver(() => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; scan(); }); }).observe(D.documentElement, { childList: true, subtree: true });
-  chrome.runtime.onMessage.addListener((m, _, reply) => { m == "ww-status" && reply({ docKey: key, active: id, file }); });
+  // A page that never stops changing (Docs, Teams) would otherwise be looked at every frame: first change at once,
+  // then at most about six looks a second.
+  let pend = 0, lastScan = 0;
+  const look = () => { pend = 0; lastScan = performance.now(); scan(); };
+  new MutationObserver(() => {
+    if (pend) return;
+    pend = 1;
+    const wait = 160 - (performance.now() - lastScan);
+    wait > 0 ? setTimeout(() => requestAnimationFrame(look), wait) : requestAnimationFrame(look);
+  }).observe(D.documentElement, { childList: true, subtree: true });
+  // What the page looks like to the extension: element names, sizes and colours only, never document text.
+  const sig = (n) => {
+    const r = n.getBoundingClientRect(), c = typeof n.className == "string" ? n.className.trim().split(/\s+/).slice(0, 3).join(".") : "";
+    return `${n.tagName.toLowerCase()}${n.id ? "#" + n.id : ""}${c ? "." + c : ""} ${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}x${Math.round(r.height)} bg=${getComputedStyle(n).backgroundColor}${n.hasAttribute("data-ww-clear") ? " CLEARED" : ""}${n.hasAttribute("data-ww-page") ? " PAGE" : ""}`;
+  };
+  const details = () => ({
+    version: chrome.runtime.getManifest().version, page: HN + P.replace(/\/d\/[\w-]+/, "/d/ID"), app, theme: id, level, motion: S.motion, still: still(),
+    scene: !!(bg && bg.isConnected), sceneBox: bg ? bg.style.cssText.slice(0, 200) : "", viewport: [innerWidth, innerHeight],
+    editor: !!D.querySelector(".kix-appview-editor"), pages: D.querySelectorAll(".kix-page-paginated").length,
+    at: [[.5, .5], [.08, .5], [.92, .5], [.5, .2], [.5, .85]].map(([x, y]) => ({ x, y, stack: D.elementsFromPoint(innerWidth * x, innerHeight * y).slice(0, 12).map(sig) })),
+  });
+  chrome.runtime.onMessage.addListener((m, _, reply) => {
+    if (m == "ww-status") reply({ docKey: key, active: id, file, google: GH, shown: !!(bg && bg.isConnected) });
+    if (m == "ww-details") reply(details());
+  });
 
-  const load = () => chrome.storage.sync.get(DEF, (v) => chrome.storage.local.get(["customs", "community", "remote"], (c) => {
+  const load = () => chrome.storage.sync.get(DEF, (v) => chrome.storage.local.get(["customs", "community", "remote", "perf"], (c) => {
     S = { ...DEF, ...v };
+    level = c.perf && Date.now() - c.perf.at < 14 * 864e5 ? c.perf.level : 0;     // re-tested after two weeks
     const before = id && !T[id] && JSON.stringify(custom[id] || R[id]);
     custom = {}; R = c.remote || {};                                   // R: built-in themes added on the website since
     (c.community || []).concat(c.customs || []).forEach((x) => (custom[x.id] = { ...x, custom: 1 }));

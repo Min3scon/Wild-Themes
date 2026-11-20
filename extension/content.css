@@ -4,6 +4,8 @@
   pointer-events:none!important;overflow:hidden!important;contain:strict}
 #ww-bg>i,#ww-bg>canvas{position:absolute;inset:0;display:block;pointer-events:none;font-style:normal}
 #ww-bg.still,#ww-bg.still *{animation:none!important}
+/* light mode (this device struggled): the biggest, rotating and 3D layers hold still, the rest keep moving */
+#ww-bg.lite>i[data-heavy]{animation-play-state:paused!important}
 #ww-bg.veil::after{content:"";position:absolute;inset:0;background:var(--ww-veil,transparent)}
 
 /* make room for the scene: only Word's grey canvas behind the page turns see-through */
