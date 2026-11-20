@@ -46,6 +46,15 @@ const DOCS_SIMPLE = DOCS.replace('class="kix-page-paginated" style="position:rel
 // Google renamed its classes: only the general scan (white box on a grey surround) can find the page
 const DOCS_RENAMED = DOCS_SIMPLE.replace(/kix-page-column/g, "x5").replace(/kix-page-paginated/g, "x1").replace(/kix-appview-editor-container/g, "x2").replace(/kix-appview-editor/g, "x3").replace(/kix-canvas-tile-content/g, "x4");
 
+// the page box is the only thing of its size (no outer column): the glow sits on the box that is itself inverted in dark mode
+const DOCS_FLAT = DOCS.replace('class="kix-page-column" style="position:relative;width:816px;height:1056px;margin:20px auto;overflow:hidden"', 'class="kix-page-column" style="position:relative;width:900px;height:1056px;margin:20px auto"');
+// text is DOM text on a white page box (no canvas), as in an older rendering mode
+const DOCS_DOMTEXT = DOCS_SIMPLE.replace(/<canvas class="kix-canvas-tile-content"[^>]*><\/canvas>/g, "").replace('<div class="kix-cursor">', '<div id="words" style="position:absolute;left:60px;top:60px;font:bold 70px sans-serif;color:#000;line-height:1.2;white-space:nowrap">TEXT TEXT</div><div class="kix-cursor">');
+// Google renamed the page box classes but the canvases are still there
+const DOCS_NOPAGE = DOCS.replace(/kix-page-paginated/g, "zz1").replace(/kix-page-column/g, "zz2");
+// a document with its own dark page colour
+const DOCS_ALREADYDARK = DOCS.replace(/background-color: rgb\(255, 255, 255\)/g, "background-color: rgb(30, 30, 30)");
+
 const SLIDES = `<!doctype html><html><body style="margin:0;background:#f9fbfd"><div id="docs-chrome" style="height:84px"><div role="menubar" style="height:34px">File</div><div role="toolbar" style="height:42px">Tools</div></div>
 <div id="docs-editor" style="position:absolute;top:84px;bottom:0;left:200px;right:0;background:#f1f3f4"><div id="workspace" style="position:absolute;inset:0;background:#f1f3f4"><div class="punch-viewer-container" style="position:relative;width:640px;height:360px;margin:60px auto;background:#fff"></div></div></div>
 <div style="position:absolute;top:84px;bottom:0;left:0;width:200px;background:#f9fbfd">filmstrip</div></body></html>`;
@@ -59,7 +68,7 @@ test("Google Docs, Slides and Sheets: scene, per-document theme, sparks, other G
   const SITE = "https://min3scon.github.io/Wild-Themes/";
   try {
     await ctx.route(SITE + "**", (r) => r.fulfill({ status: 404, body: "" }));
-    const html = { "/document/d/DOCA/edit": DOCS, "/document/d/DOCB/edit": DOCS, "/document/d/SIMPLE/edit": DOCS_SIMPLE, "/document/d/RENAMED/edit": DOCS_RENAMED,
+    const html = { "/document/d/DOCA/edit": DOCS, "/document/d/DOCB/edit": DOCS, "/document/d/SIMPLE/edit": DOCS_SIMPLE, "/document/d/RENAMED/edit": DOCS_RENAMED, "/document/d/FLAT/edit": DOCS_FLAT, "/document/d/DOMTEXT/edit": DOCS_DOMTEXT, "/document/d/NOPAGE/edit": DOCS_NOPAGE, "/document/d/ALREADYDARK/edit": DOCS_ALREADYDARK,
       "/presentation/d/SLD1/edit": SLIDES, "/spreadsheets/d/SHT1/edit": SHEETS, "/forms/d/FRM1/edit": DOCS };
     await ctx.route("https://docs.google.com/**", (r) => { const p = new URL(r.request().url()).pathname; r.fulfill({ contentType: "text/html", body: html[p] || DOCS }); });
     let [sw] = ctx.serviceWorkers(); if (!sw) sw = await ctx.waitForEvent("serviceworker");
@@ -184,34 +193,80 @@ test("Google Docs, Slides and Sheets: scene, per-document theme, sparks, other G
       await pg.close();
     });
 
-    await t.test("Docs dark page: Auto follows the theme, On and Off override it, changes apply live", async () => {
+    await t.test("Docs dark mode: plain inversion, page colour untouched; Auto follows the theme, On and Off override it, live", async () => {
       const shot = path.join(H.OUT, "gdocs-dark.png"), px = (x0, y0, x1, y1) => H.sample(shot, [x0 / 1280, y0 / 720, x1 / 1280, y1 / 720]);
-      const page = async (theme, dark) => {
+      const page = async (theme, dark, id = "DOCA") => {
         await sw.evaluate(([th, d]) => chrome.storage.sync.set({ theme: th, docsDark: d }), [theme, dark]);
-        const pg = await open("/document/d/DOCA/edit");
-        await pg.waitForSelector(".kix-page-column[data-ww-page]", { state: "attached", timeout: 15000 });
+        const pg = await open(`/document/d/${id}/edit`);
+        await pg.waitForSelector("[data-ww-page]", { state: "attached", timeout: 15000 });
         await pg.waitForTimeout(400);
         return pg;
       };
       let pg = await page("synthwave", "auto");                                   // dark theme + Auto
       assert.equal(await pg.$eval("html", (n) => n.hasAttribute("data-ww-dark")), true);
-      assert.match(await pg.$eval(".kix-canvas-tile-content", (n) => getComputedStyle(n).filter), /invert\(1\).*hue-rotate\(180deg\)/);
+      assert.equal(await pg.$eval(".kix-canvas-tile-content", (n) => getComputedStyle(n).backgroundColor), "rgb(255, 255, 255)", "the page's own colour is not changed");
+      assert.match(await pg.$eval(".kix-page-paginated", (n) => getComputedStyle(n).filter), /invert\(1\).*hue-rotate\(180deg\)/);
+      assert.equal(await pg.$eval(".kix-canvas-tile-content", (n) => getComputedStyle(n).filter), "none", "inverted once, not twice");
       await pg.screenshot({ path: shot });
-      assert.ok(H.lum(px(500, 200, 900, 400)) < 90, "dark page, got " + px(500, 200, 900, 400));
+      assert.ok(H.lum(px(500, 200, 900, 400)) < 25, "plain dark, got " + px(500, 200, 900, 400));
       await sw.evaluate(() => chrome.storage.sync.set({ docsDark: "off" }));          // live, no reload
       await pg.waitForFunction(() => !document.documentElement.hasAttribute("data-ww-dark"), null, { timeout: 5000 });
       await pg.screenshot({ path: shot });
       assert.ok(H.lum(px(500, 200, 900, 400)) > 240, "back to white");
       await pg.close();
-      pg = await page("mint", "auto");                                            // light theme + Auto: white page
+      pg = await page("mint", "auto");                                            // light theme + Auto: the page is left as it is
       assert.equal(await pg.$eval("html", (n) => n.hasAttribute("data-ww-dark")), false);
       await pg.close();
       pg = await page("mint", "on");                                              // On beats a light theme
       assert.equal(await pg.$eval("html", (n) => n.hasAttribute("data-ww-dark")), true);
       await pg.screenshot({ path: shot });
-      assert.ok(H.lum(px(500, 200, 900, 400)) < 90, "dark page on a light theme");
+      assert.ok(H.lum(px(500, 200, 900, 400)) < 25, "dark page on a light theme");
       await pg.close();
       await sw.evaluate(() => chrome.storage.sync.set({ theme: "synthwave", docsDark: "auto" }));
+    });
+
+    await t.test("Docs dark mode: text stays readable whatever draws it (DOM text on a white box, canvases without the page box), and a document's own dark page isn't flipped", async () => {
+      const shot = path.join(H.OUT, "gdocs-dark2.png");
+      await sw.evaluate(() => chrome.storage.sync.set({ theme: "synthwave", docsDark: "auto" }));
+      // DOM text on a white page box: black text turns light on the dark page
+      let pg = await open("/document/d/DOMTEXT/edit");
+      await pg.waitForSelector("html[data-ww-dark] [data-ww-page]", { state: "attached", timeout: 15000 });
+      await pg.waitForTimeout(400);
+      const r = await pg.$eval("#words", (n) => { const b = n.getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom].map(Math.round); });
+      await pg.screenshot({ path: shot });
+      const words = H.sample(shot, [r[0] / 1280, r[1] / 720, r[2] / 1280, r[3] / 720]), below = H.sample(shot, [r[0] / 1280, (r[3] + 40) / 720, r[2] / 1280, (r[3] + 140) / 720]);
+      assert.ok(H.lum(below) < 12, "dark page around the text, got " + below);
+      assert.ok(H.lum(words) > 30, "light text on it, got " + words + " (page " + below + ")");
+      await pg.close();
+      // no page box classes: the canvases are inverted on their own
+      pg = await open("/document/d/NOPAGE/edit");
+      await pg.waitForSelector("html[data-ww-dark]", { state: "attached", timeout: 15000 });
+      assert.match(await pg.$eval(".kix-canvas-tile-content", (n) => getComputedStyle(n).filter), /invert\(1\)/);
+      await pg.close();
+      // a document whose own page colour is already dark is left alone in Auto, inverted by On
+      pg = await open("/document/d/ALREADYDARK/edit");
+      await pg.waitForSelector("[data-ww-page]", { state: "attached", timeout: 15000 });
+      await pg.waitForTimeout(500);
+      assert.equal(await pg.$eval("html", (n) => n.hasAttribute("data-ww-dark")), false, "already dark: Auto leaves it");
+      await sw.evaluate(() => chrome.storage.sync.set({ docsDark: "on" }));
+      await pg.waitForFunction(() => document.documentElement.hasAttribute("data-ww-dark"), null, { timeout: 5000 });
+      await pg.close();
+      await sw.evaluate(() => chrome.storage.sync.set({ docsDark: "auto" }));
+    });
+
+    await t.test("Docs dark mode: the glow keeps the theme's colour, on an outer box and on the inverted page box itself", async () => {
+      await sw.evaluate(() => chrome.storage.sync.set({ theme: "synthwave", docsDark: "auto" }));
+      for (const id of ["DOCA", "FLAT"]) {
+        const pg = await open(`/document/d/${id}/edit`);
+        await pg.waitForSelector("html[data-ww-dark] [data-ww-page]", { state: "attached", timeout: 15000 });
+        await pg.waitForTimeout(400);
+        const left = await pg.$eval(".kix-page-paginated", (n) => Math.round(n.getBoundingClientRect().left));
+        const shot = path.join(H.OUT, "gdocs-dark-glow.png"); await pg.screenshot({ path: shot });
+        const px = (x0, y0, x1, y1) => H.sample(shot, [x0 / 1280, y0 / 720, x1 / 1280, y1 / 720]);
+        const near = px(left - 8, 160, left - 3, 240), far = px(left - 30, 160, left - 25, 240);
+        assert.ok(near[0] - far[0] > 12 && near[0] > near[1], `${id}: glow stays pink (red above green), got near ${near} far ${far}`);
+        await pg.close();
+      }
     });
 
     await t.test("Docs clean view: rulers and scrollbar are gone, scrolling still works; the switch brings them back", async () => {
