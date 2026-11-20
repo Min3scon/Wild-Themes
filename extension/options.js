@@ -1,5 +1,5 @@
 const T = self.WW_THEMES, $ = (s) => document.querySelector(s);
-let customs = [], community = [], remote = {}, docx = null, docName = "", docKind = "docx", kind = "colours", picData = null;
+let found = {}, customs = [], community = [], remote = {}, docx = null, docName = "", docKind = "docx", kind = "colours", picData = null;
 
 // ---------- tabs
 function tab(name) {
@@ -20,8 +20,9 @@ function fillPick() {
     for (const [id, name] of list) g.append(new Option(name, id));
     if (list.length) sel.append(g);
   };
-  group("Dark", Object.entries(T).filter(([, t]) => t.mode === "dark").map(([id, t]) => [id, t.name]));
-  group("Light", Object.entries(T).filter(([, t]) => t.mode === "light").map(([id, t]) => [id, t.name]));
+  const listed = Object.entries(T).filter(([id, t]) => !t.secret || found[id]);     // the secret theme, once it's been found
+  group("Dark", listed.filter(([, t]) => t.mode === "dark").map(([id, t]) => [id, t.name]));
+  group("Light", listed.filter(([, t]) => t.mode === "light").map(([id, t]) => [id, t.name]));
   group("New on the website", Object.entries(remote).map(([id, t]) => [id, t.name]));
   group("Community", community.map((c) => [c.id, c.name]));
   group("Yours", customs.map((c) => [c.id, c.name]));
@@ -189,7 +190,9 @@ $("#imp").onchange = async (e) => {
   } catch (_) { cmsg("That isn't a Wild Themes theme file."); }
 };
 
-chrome.storage.local.get(["customs", "community", "remote"], (c) => { customs = c.customs || []; community = c.community || []; remote = c.remote || {}; fillPick(); renderMine(); preview(); });
+chrome.storage.local.get(["customs", "community", "remote"], (c) => { customs = c.customs || []; community = c.community || []; remote = c.remote || {}; fillPick(); renderMine(); preview();
+  chrome.storage.sync.get({ found: {} }, (v) => { found = v.found || {}; fillPick(); });
+});
 
 // Picking a theme applies it straight away (no file needed); the file steps below are optional.
 chrome.storage.sync.get({ theme: "" }, (v) => { if (v.theme) $("#pick").value = v.theme; });

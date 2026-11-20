@@ -15,7 +15,7 @@ test("Firefox manifest: event page, add-on id, data declaration; Chrome manifest
   assert.deepEqual(c, src, "Chrome package uses the manifest as it is");
   assert.ok(c.background.service_worker && !c.browser_specific_settings, "no Firefox keys in the Chrome package");
   assert.equal(f.manifest_version, 3);
-  assert.deepEqual(f.background, { scripts: ["lib/themes.js", "lib/catalog.js", "background.js"] }, "helpers load before background.js; no service_worker");
+  assert.deepEqual(f.background, { scripts: ["lib/themes.js", "lib/catalog.js", "lib/rewards.js", "background.js"] }, "helpers load before background.js; no service_worker");
   assert.equal(f.browser_specific_settings.gecko.id, GECKO_ID);
   assert.deepEqual(f.browser_specific_settings.gecko.data_collection_permissions, { required: ["none"] });
   for (const k of ["permissions", "host_permissions", "content_scripts", "action", "options_ui", "icons", "version"]) assert.deepEqual(f[k], c[k], k + " identical");

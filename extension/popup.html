@@ -26,11 +26,15 @@
       <button data-v="auto" role="radio" title="On, unless your device is low-powered or asks for less motion">Auto</button><button data-v="on" role="radio">On</button><button data-v="off" role="radio">Still</button>
     </div></div>
   <label class="row"><span>Sparks when typing</span><input type="checkbox" id="sparks"></label>
+  <div class="row words"><span>Words typed</span><span><b id="wbadges" class="badges"></b> <b id="wtotal">0</b></span></div>
+  <p class="wnote" id="wnote"></p>
+  <p class="wnote" id="wfound" hidden><span id="wfoundtext"></span> <button id="wreplay" class="linkbtn">Watch it again</button></p>
 </section>
 <footer>
   <button id="save-file" class="btn primary">Save theme into a file</button>
   <button id="customs" class="btn">Custom themes</button>
 </footer>
 <script src="lib/themes.js"></script>
+<script src="lib/rewards.js"></script>
 <script src="popup.js"></script>
 </body></html>

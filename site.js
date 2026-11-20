@@ -6,7 +6,7 @@ const store = { get: (k, d) => { try { return localStorage.getItem(k) ?? d; } ca
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 let themes = [], filter = "all", query = "", motion = store.get("motion", reduced ? "0" : "1") === "1";
 
-for (const [id, t] of Object.entries(self.WW_THEMES)) themes.push({ ...t, id, kind: "builtin", author: "Wild Themes", thumb: `previews/${id}.webp` });
+for (const [id, t] of Object.entries(self.WW_THEMES)) if (!t.secret) themes.push({ ...t, id, kind: "builtin", author: "Wild Themes", thumb: `previews/${id}.webp` });
 fetch("community/index.json").then((r) => (r.ok ? r.json() : { themes: [] })).then((j) => {
   for (const c of j.themes || []) themes.push({ ...c, kind: "community", blurb: c.image ? "A picture theme from the community." : "A colour theme from the community." });
   render();

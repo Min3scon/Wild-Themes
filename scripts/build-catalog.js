@@ -10,6 +10,7 @@ const opt = (p) => (exists(p) ? p : undefined);
 
 const themes = [];
 for (const [id, t] of Object.entries(ctx.self.WW_THEMES)) {
+  if (t.secret) continue;                                           // found by typing; it ships inside the extension
   themes.push({ id, kind: "builtin", ...t,
     preview: opt(`extension/previews/${id}.webp`), scene: opt(`extension/scenes/${id}.css`),
     backdrop: opt(`extension/backdrops/${id}.gif`), backdropWide: opt(`extension/backdrops-wide/${id}.gif`),

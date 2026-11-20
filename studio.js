@@ -83,7 +83,7 @@ function renderFile() {
 function renderGrid() {
   const g = $("#grid"); if (!g) return;
   const cur = info && info.theme ? info.theme.id : null, my = mine();
-  const items = Object.entries(T).map(([id, t]) => [id, t, `extension/previews/${id}.webp`])
+  const items = Object.entries(T).filter(([, t]) => !t.secret).map(([id, t]) => [id, t, `extension/previews/${id}.webp`])
     .concat(community.map((c) => [c.id, c, c.thumb]), Object.entries(my).map(([id, m]) => [id, { ...m.theme, id }, null, "Mine"]));
   if (cur && !items.some((x) => x[0] === cur)) items.unshift([cur, info.theme, null, "In this file"]);
   g.replaceChildren(...items.map(([id, t, thumb, tag]) => {

@@ -4,8 +4,8 @@
 //    approved community themes arrive by themselves, checked first, every few hours.
 // Chrome runs this as a service worker and loads the helpers here; Firefox loads them from the
 // manifest's "scripts" list, before this file, and has no importScripts.
-if (typeof importScripts === "function") importScripts("lib/themes.js", "lib/catalog.js");
-const BUNDLED = self.WW_THEMES, C = self.WTCatalog;
+if (typeof importScripts === "function") importScripts("lib/themes.js", "lib/catalog.js", "lib/rewards.js");
+const BUNDLED = self.WW_THEMES, C = self.WTCatalog, RW = self.WWRewards;
 
 chrome.runtime.onMessage.addListener((m, s, reply) => {
   if (m.css && /^[a-z0-9-]+$/.test(m.css)) {
@@ -15,7 +15,40 @@ chrome.runtime.onMessage.addListener((m, s, reply) => {
   }
   if (m.sync) { sync().then((r) => reply(r), (e) => reply({ error: String(e && e.message || e) })); return true; }
   if (m.picture && /^[a-z0-9-]+$/.test(m.picture)) { cachePicture(m.picture).then((ok) => reply({ ok }), () => reply({ ok: false })); return true; }
+  if (m.words) {
+    const n = Math.floor(m.words);
+    if (!(n > 0 && n <= 500) || typeof m.theme != "string" || !/^[\w-]{1,64}$/.test(m.theme)) return void reply(null);
+    addWords(m.theme, n).then(reply, () => reply(null));
+    return true;
+  }
 });
+
+// Words typed, per theme (this browser only), and the secret theme's dice: each word is one roll with a 1 in RW.ODDS chance.
+// Once found it's saved in sync storage, so it's unlocked wherever you're signed in. One update at a time: pages in several
+// tabs can report together. self.wtRandom replaces the dice in the tests.
+let wordQueue = Promise.resolve();
+const roll = () => (self.wtRandom ? self.wtRandom() : crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296);
+function addWords(theme, n) {
+  const job = wordQueue.then(async () => {
+    const { words = {} } = await chrome.storage.local.get("words");
+    const before = RW.total(words), total = before + n;
+    words[theme] = (+words[theme] || 0) + n;
+    await chrome.storage.local.set({ words });
+    const out = { total, theme: words[theme] };
+    const { found = {} } = await chrome.storage.sync.get("found");
+    if (!found[RW.SECRET]) for (let i = 0; i < n; i++) if (roll() < 1 / RW.ODDS) {
+      found[RW.SECRET] = { at: Date.now(), words: before + i + 1, theme };
+      await chrome.storage.sync.set({ found });
+      out.secret = RW.SECRET; out.total = before + i + 1;
+      break;
+    }
+    const m = RW.MILESTONES.filter((x) => before < x.at && total >= x.at).pop();
+    if (m) out.badge = m.id;
+    return out;
+  });
+  wordQueue = job.catch(() => {});
+  return job;
+}
 
 // Fetch the catalogue; store new built-in themes (with their scene CSS) and community themes.
 async function sync() {

@@ -27,7 +27,7 @@ test("every theme has all its parts", () => {
     assert.ok(!/url\s*\(|@import|expression\s*\(|javascript:/i.test(css), id + ": scene loads nothing (works under any page policy)");
   }
   const cat = JSON.parse(fs.readFileSync(path.join(ROOT, "catalog.json"), "utf8"));
-  assert.deepEqual(cat.themes.filter((t) => t.kind === "builtin").map((t) => t.id).sort(), ids.slice().sort(), "committed catalog.json lists every theme (node scripts/build-catalog.js)");
+  assert.deepEqual(cat.themes.filter((t) => t.kind === "builtin").map((t) => t.id).sort(), ids.filter((id) => !H.THEMES[id].secret).sort(), "committed catalog.json lists every theme but the secret one (node scripts/build-catalog.js)");
 });
 
 for (const [id, W] of Object.entries(WORDS)) test(`${id}: the word repeated, files sized for Office, applies to Word, PowerPoint and Excel files`, async () => {
