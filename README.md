@@ -8,7 +8,7 @@ Animated themes for Word, PowerPoint, Excel and Teams, saved **inside** your fil
 |---|---|
 | `/` (`index.html`, `site.*`) | Theme gallery, live previews, "theme a file", make and share your own theme |
 | `studio.html` | File studio: open any Word, PowerPoint or Excel file to see its theme, check it's intact, change it, tune it, restore it or remove it. Runs in the browser; nothing is uploaded |
-| `extension/` | Browser extension: live scenes in Word, PowerPoint, Excel and Teams on the web, plus the file tools. `extension/lib/` is the shared core every tool uses |
+| `extension/` | Browser extension (Chrome, Edge, Brave, Arc, Firefox): live scenes in Word, PowerPoint, Excel, Teams and Google Docs, Sheets and Slides on the web, plus the file tools. `extension/lib/` is the shared core every tool uses. `scripts/build-extension.js` builds the Chrome and Firefox packages (the site's downloads are rebuilt on every deploy) |
 | `addin/` | Office add-in for Word, PowerPoint and Excel (Windows, Mac, web) |
 | `teams/` | Teams app: File studio and the theme gallery as tabs |
 | `catalog.json` | Live theme list (built-in + approved community themes), rebuilt on every deploy. The add-in and the extension read it, so new themes arrive without a new download |

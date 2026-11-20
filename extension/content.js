@@ -5,7 +5,10 @@
 (() => {
   const D = document, H_ = D.documentElement, L = location, P = L.pathname, HN = L.hostname;
   // Which app? Word and PowerPoint have a page/slide on a canvas; Excel and Teams have panes.
-  const app = /\/we\//i.test(P) || HN == "word.cloud.microsoft" ? "doc"
+  // Google Docs and Slides: a page/slide on a grey surround, like Word. Sheets: a grid pane, like Excel.
+  const GH = HN == "docs.google.com", GK = GH ? (/^\/(document|spreadsheets|presentation)\//.exec(P) || [])[1] : "";
+  const app = GK ? (GK == "spreadsheets" ? "pane" : "doc")
+    : /\/we\//i.test(P) || HN == "word.cloud.microsoft" ? "doc"
     : /\/p\//i.test(P) || HN == "powerpoint.cloud.microsoft" ? "doc"
     : /\/x\//i.test(P) || HN == "excel.cloud.microsoft" || /^teams\./.test(HN) || HN == "assignments.edu.cloud.microsoft" ? "pane" : "";   // Assignments: its own site, in a frame inside Teams
   if (window.__ww || !app || innerWidth < 300) return;
@@ -14,8 +17,9 @@
   const ATTR = (n, a, v) => v == null ? n.removeAttribute(a) : n.setAttribute(a, v);
   let S = DEF, custom = {}, R = {}, id, t, bg, fx, file, pages = [], tm, last = 0, ptr, k = 0;
 
-  // Which file is this? A short hash of the WOPISrc file address (the address itself is never stored).
-  let key = (new URLSearchParams(L.search.toLowerCase()).get("wopisrc") || "").split("?")[0], h = 2166136261;
+  // Which file is this? A short hash of the WOPISrc file address, or of Google's document id
+  // (the address / id itself is never stored).
+  let key = GH ? (/\/d\/([\w-]+)/.exec(P) || [])[1] || "" : (new URLSearchParams(L.search.toLowerCase()).get("wopisrc") || "").split("?")[0], h = 2166136261;
   for (let i = 0; i < key.length; i++) h = Math.imul(h ^ key.charCodeAt(i), 16777619);
   key = key && (h >>> 0).toString(36);
 
@@ -44,7 +48,7 @@
 
   // Don't show anything until we know which theme applies: in Word/PowerPoint a theme saved in
   // the file only shows up once the page is drawn, and showing the default first made it flash.
-  let ready = app == "pane", seen = 0;
+  let ready = app == "pane" || GH, seen = 0;   // Google files carry no theme we can read: nothing to wait for
   function probe(last) {
     if (ready) return;
     file = readFile();
@@ -61,7 +65,7 @@
       id = nid; t = nt;
       bg = D.createElement("div");
       bg.id = "ww-bg";
-      bg.innerHTML = "<i></i><i></i><i></i><i></i>";
+      for (let i = 0; i < 4; i++) bg.append(D.createElement("i"));
       if (t.custom) {
         const c = t.colors || [];
         bg.dataset.scene = "custom";
@@ -120,7 +124,7 @@
   // look because the page behind is painted in the app's own background colour.
   function scanPane() {
     // Teams v2 has no role=main; its chat/channel area is app-layout-area--main
-    const root = D.querySelector('[data-tid="app-layout-area--main"]') || D.querySelector("[role=main]") || (HN.startsWith("assignments.") ? D.body : null), rr = root && root.getBoundingClientRect();
+    const root = D.querySelector('[data-tid="app-layout-area--main"]') || D.querySelector("[role=main]") || (GH && D.querySelector(".grid-container, #docs-editor, #docs-editor-container")) || (HN.startsWith("assignments.") ? D.body : null), rr = root && root.getBoundingClientRect();
     if (!rr || rr.width * rr.height < 1e5) return;
     let shell = "";
     for (let a = root.parentElement; a && a != D.body && a != H_; a = a.parentElement) {
@@ -150,7 +154,18 @@
     bg.classList.add("veil");
   }
 
+  // The page's own background colour (on body or html), read with our rules switched off.
+  let shell0;
+  const shellColour = () => {
+    if (shell0) return shell0;
+    const was = H_.getAttribute("data-ww"); H_.removeAttribute("data-ww");
+    shell0 = [D.body, H_].map((n) => getComputedStyle(n).backgroundColor).find((c) => !/, 0\)|^transparent/.test(c)) || "";
+    if (was != null) H_.setAttribute("data-ww", was);
+    return shell0;
+  };
+
   function scan() {
+    hookTyping();
     if (!bg) return;
     if (!bg.isConnected) H_.append(bg);
     if (app == "pane") return scanPane();
@@ -186,6 +201,9 @@
           ATTR(n, "data-ww-clear", "");
         }
       }
+      // Google's top bars may have no colour of their own and sit on the page's background, which we clear:
+      // when nothing solid is behind them, keep the page's original colour there
+      if (!plate && GH && rb && !D.elementsFromPoint(W / 2, Math.max(2, rb / 2)).filter(ok).some((n) => n.hasAttribute("data-ww-clear") || solid(n))) plate = shellColour();
       if (plate) bg.lastChild.style.cssText = `inset:0 0 auto;height:${rb}px;background:${plate}`;
     }
     const f = readFile();
@@ -195,7 +213,7 @@
 
   // Typing sparks: 12 reusable dots, coloured once per theme, moved by the compositor.
   const G = "01<>{}#*+✦✧★";
-  addEventListener("keydown", (e) => {
+  const onKey = (e) => {
     const now = e.timeStamp;
     if (!t || !S.sparks || now - last < 90 || e.ctrlKey || e.metaKey || e.altKey || (e.key.length > 1 && e.key != "Enter")) return;
     last = now;
@@ -213,7 +231,7 @@
         fx = D.createElement("div");
         fx.id = "ww-fx";
         fx.dataset.fx = t.fx || "dot";
-        fx.innerHTML = "<b></b>".repeat(12);
+        for (let i = 0; i < 12; i++) fx.append(D.createElement("b"));
         [...fx.children].forEach((b, i) => {
           b.style.setProperty("--c", i % 2 ? t.accent2 : t.accent);
           if (/glyph|star/.test(t.fx)) b.textContent = t.fx == "star" ? G[9 + i % 3] : G[i % 9];
@@ -229,7 +247,17 @@
         { duration: 500 + d * 10, easing: "ease-out" });
       }
     });
-  }, true);
+  };
+  addEventListener("keydown", onKey, true);
+  // Google Docs reads typing in a hidden same-origin frame, so keys never reach this page: listen there too.
+  let typingDoc = null;
+  const hookTyping = () => {
+    if (!GH) return;
+    try {
+      const d = (D.querySelector("iframe.docs-texteventtarget-iframe") || {}).contentDocument;
+      if (d && d != typingDoc) { typingDoc = d; d.addEventListener("keydown", onKey, true); }
+    } catch (_) { /* not reachable: no sparks */ }
+  };
   addEventListener("pointerdown", (e) => { ptr = [e.clientX, e.clientY]; }, { capture: true, passive: true });
   addEventListener("resize", () => later(300), { passive: true });
   addEventListener("scroll", () => later(400), { capture: true, passive: true });

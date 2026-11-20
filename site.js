@@ -261,6 +261,10 @@ function openTheme(t) {
 function openInstall() {
   const body = openDialog("#t-install");
   $$(".copy", body).forEach((b) => b.onclick = async () => { try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = "Copied"; } catch (_) { b.textContent = "Select it"; } });
+  // show the steps for the browser being used; the other one is a click away
+  const pick = (name) => { $$("[data-browser]", body).forEach((d) => (d.hidden = d.dataset.browser !== name)); $$("[data-b]", body).forEach((b) => b.setAttribute("aria-pressed", b.dataset.b === name)); };
+  $$("[data-b]", body).forEach((b) => (b.onclick = () => pick(b.dataset.b)));
+  pick(/firefox/i.test(navigator.userAgent) && !/seamonkey/i.test(navigator.userAgent) ? "firefox" : "chrome");
 }
 
 // ---------- your own theme: built and used locally; shared only if you press Share
