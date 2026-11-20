@@ -1,5 +1,5 @@
 const T = self.WW_THEMES, $ = (s) => document.querySelector(s);
-const DEF = { on: true, theme: "synthwave", motion: "auto", sparks: true, docs: {} };
+const DEF = { on: true, theme: "synthwave", motion: "auto", sparks: true, docs: {}, docsDark: "auto", docsClean: true };
 let S = DEF, customs = [], community = [], remote = {}, status = null, scope = "all", filter = "all";
 
 const current = () => (scope === "doc" && status && status.docKey && S.docs[status.docKey]) || S.theme;
@@ -83,6 +83,8 @@ chrome.storage.sync.get(DEF, (v) => {
         status = r; scope = "doc";
         if (r.google) {   // Google pages: if the scene isn't showing, copy what the extension sees so it can be fixed
           $("#gnote").hidden = false;
+          $("#gclean").checked = S.docsClean !== false; $("#gclean").onchange = (e) => save({ docsClean: e.target.checked });
+          for (const b of document.querySelectorAll("#gdark button")) { b.setAttribute("aria-checked", b.dataset.d === S.docsDark); b.onclick = () => { save({ docsDark: b.dataset.d }); for (const x of document.querySelectorAll("#gdark button")) x.setAttribute("aria-checked", x === b); }; }
           $("#gstate").textContent = r.shown ? "Scene is on in this Google page." : "Scene isn't showing in this Google page.";
           $("#gcopy").onclick = () => chrome.tabs.sendMessage(tab.id, "ww-details", (d) => navigator.clipboard.writeText(JSON.stringify(d, null, 1)).then(() => ($("#gstate").textContent = "Copied. Paste it in the chat."), () => ($("#gstate").textContent = "Couldn't copy.")));
         }
