@@ -438,5 +438,28 @@ self.WW_THEMES = {
       "minor": "Aptos",
       "panel": "#faf8ff"
     }
+  },
+  "mexocoder": {
+    "name": "MexoCoder",
+    "emoji": "🌮",
+    "mode": "dark",
+    "blurb": "Fiesta night: papel picado, marigold and mexocoder on repeat",
+    "accent": "#ff2e9a",
+    "accent2": "#ffb02e",
+    "fx": "confetti",
+    "doc": {
+      "dk1": "2A0F1F",
+      "dk2": "5C1A3A",
+      "lt2": "FFF4E6",
+      "accent1": "C2185B",
+      "accent2": "00796B",
+      "accent3": "FF2E9A",
+      "accent4": "FFB02E",
+      "accent5": "00C2B0",
+      "accent6": "D62828",
+      "major": "Georgia",
+      "minor": "Aptos",
+      "panel": "#fffaf2"
+    }
   }
 };

@@ -1,8 +1,8 @@
 {
  "format": 1,
  "site": "https://min3scon.github.io/Wild-Themes/",
- "version": "131af3c47794",
- "updated": "2026-11-20T11:39:44.801Z",
+ "version": "3202b987c6e1",
+ "updated": "2026-11-20T11:55:01.958Z",
  "themes": [
   {
    "id": "synthwave",
@@ -573,6 +573,36 @@
    "backdrop": "extension/backdrops/larpcoder.gif",
    "backdropWide": "extension/backdrops-wide/larpcoder.gif",
    "teams": "extension/teams-backgrounds/larpcoder.jpg"
+  },
+  {
+   "id": "mexocoder",
+   "kind": "builtin",
+   "name": "MexoCoder",
+   "emoji": "🌮",
+   "mode": "dark",
+   "blurb": "Fiesta night: papel picado, marigold and mexocoder on repeat",
+   "accent": "#ff2e9a",
+   "accent2": "#ffb02e",
+   "fx": "confetti",
+   "doc": {
+    "dk1": "2A0F1F",
+    "dk2": "5C1A3A",
+    "lt2": "FFF4E6",
+    "accent1": "C2185B",
+    "accent2": "00796B",
+    "accent3": "FF2E9A",
+    "accent4": "FFB02E",
+    "accent5": "00C2B0",
+    "accent6": "D62828",
+    "major": "Georgia",
+    "minor": "Aptos",
+    "panel": "#fffaf2"
+   },
+   "preview": "extension/previews/mexocoder.webp",
+   "scene": "extension/scenes/mexocoder.css",
+   "backdrop": "extension/backdrops/mexocoder.gif",
+   "backdropWide": "extension/backdrops-wide/mexocoder.gif",
+   "teams": "extension/teams-backgrounds/mexocoder.jpg"
   }
  ]
 }
