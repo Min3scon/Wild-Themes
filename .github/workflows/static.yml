@@ -20,7 +20,6 @@ permissions:
   contents: read
   pages: write
   id-token: write
-  actions: read     # to check that the uploaded artifact is listed before deploying it
 
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
 # However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
@@ -34,7 +33,7 @@ jobs:
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.d1.outputs.page_url || steps.d2.outputs.page_url || steps.d3.outputs.page_url || steps.d4.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -50,19 +49,34 @@ jobs:
         with:
           # Upload entire repository
           path: '.'
-      # GitHub sometimes answers "no artifact found" for a few seconds after an upload that succeeded (the deploy step
-      # then fails with "Found 0 artifact(s)"). Wait until the artifact is listed, up to two minutes, then deploy.
-      - name: Wait until GitHub lists the uploaded artifact
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          for i in $(seq 1 24); do
-            n=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts?name=github-pages" --jq '.total_count' || echo 0)
-            echo "listed: $n"
-            [ "$n" -ge 1 ] && exit 0
-            sleep 5
-          done
-          echo "Not listed yet: deploying anyway"
+      # GitHub's artifact lookup sometimes answers "Found 0 artifact(s)" for a good upload, and only for some attempts: three
+      # runs in a row failed that way, the fourth worked, and listing the artifact over the REST API showed it all along (so
+      # waiting for it to be listed doesn't help). The lookup happens before anything is created, so asking again is safe:
+      # try up to four times, pausing a little longer each time; the last try is the one whose failure fails the job.
       - name: Deploy to GitHub Pages
-        id: deployment
+        id: d1
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+      - name: Pause, then try again
+        if: steps.d1.outcome == 'failure'
+        run: sleep 20
+      - name: Deploy to GitHub Pages (try 2)
+        id: d2
+        if: steps.d1.outcome == 'failure'
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+      - name: Pause, then try again
+        if: steps.d1.outcome == 'failure' && steps.d2.outcome == 'failure'
+        run: sleep 40
+      - name: Deploy to GitHub Pages (try 3)
+        id: d3
+        if: steps.d1.outcome == 'failure' && steps.d2.outcome == 'failure'
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+      - name: Pause, then try again
+        if: steps.d1.outcome == 'failure' && steps.d2.outcome == 'failure' && steps.d3.outcome == 'failure'
+        run: sleep 60
+      - name: Deploy to GitHub Pages (try 4)
+        id: d4
+        if: steps.d1.outcome == 'failure' && steps.d2.outcome == 'failure' && steps.d3.outcome == 'failure'
         uses: actions/deploy-pages@v4
