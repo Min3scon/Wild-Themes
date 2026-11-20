@@ -114,5 +114,43 @@ self.WWCut = (() => {
     play(c, stage, [{ opacity: 1, transform: "none" }, { opacity: 0, transform: calm ? "none" : "translateY(-40px)" }], 3800, 700, "ease-in");
     return R;
   }
-  return { secret, badge, esc, stop: () => stop(true), playing: () => !!cur };
+  // 67,000 words: "67" all over the screen. Sixty-seven of them pop up everywhere and bob up and down like weighing
+  // hands (the 6 goes up as the 7 goes down), round a big 6 🤲 7 in the middle. Doesn't block the page; typing carries on.
+  function sixSeven({ at, total, calm }) {
+    const c = start("67", "#ffd23f", "#ff2bd6", 6800), R = c.root;
+    R.setAttribute("role", "status"); R.setAttribute("aria-label", `${fmt(at)} words typed`);
+    const veil = el("i", "wwc-veil"), cols = ["#ff2bd6", "#21e6ff", "#ffd23f", "#7cff6b", "#ff7a1a", "#b388ff", "#ffffff"];
+    R.append(veil);
+    const spam = [];
+    for (let i = 0; i < 67; i++) {
+      const s = el("b", "wwc-67", "67");
+      s.style.left = (2 + Math.random() * 96).toFixed(1) + "%"; s.style.top = (4 + Math.random() * 92).toFixed(1) + "%";
+      s.style.fontSize = (18 + Math.random() ** 2 * 96 | 0) + "px"; s.style.color = cols[i % cols.length];
+      R.append(s); spam.push(s);
+    }
+    const stage = el("div", "wwc-stage"), big = el("div", "wwc-67big"), six = el("b", "wwc-six", "6"), hands = el("b", "wwc-hands", "🤲"), seven = el("b", "wwc-seven", "7");
+    const ribbon = el("div", "wwc-ribbon");
+    big.append(six, hands, seven);
+    ribbon.append(el("b", "", "SIX SEVEN"), el("small", "", `${fmt(at)} words typed${total > at ? ` (${fmt(total)} so far)` : ""}`));
+    stage.append(big, ribbon); R.append(stage);
+    D.documentElement.append(R);
+
+    play(c, veil, [{ opacity: 0 }, { opacity: 1 }], 0, 400);
+    // the centre piece slams in, then 6 and 7 take turns going up and down
+    play(c, big, [{ opacity: 0, transform: "scale(3) rotate(-8deg)" }, { opacity: 1, transform: "scale(.92) rotate(2deg)", offset: .7 }, { opacity: 1, transform: "none" }], 0, 520, "cubic-bezier(.2,1,.3,1)");
+    play(c, six, [{ transform: "translateY(18%)" }, { transform: "translateY(-18%)" }], 520, 280, "ease-in-out", { iterations: 16, direction: "alternate" });
+    play(c, seven, [{ transform: "translateY(-18%)" }, { transform: "translateY(18%)" }], 520, 280, "ease-in-out", { iterations: 16, direction: "alternate" });
+    play(c, hands, [{ transform: "rotate(-14deg)" }, { transform: "rotate(14deg)" }], 520, 280, "ease-in-out", { iterations: 16, direction: "alternate" });
+    play(c, ribbon, [{ opacity: 0, transform: "scaleX(.2)" }, { opacity: 1, transform: "none" }], 450, 420, "cubic-bezier(.2,1.3,.4,1)");
+    // the spam: all 67 are out within about 2.3 s, each one bobbing out of step with its neighbour
+    spam.forEach((s, i) => {
+      const rot = Math.random() * 50 - 25 | 0, d = i * 34 + Math.random() * 60, a = 10 + Math.random() * 10 | 0, up = i % 2 ? a : -a;
+      play(c, s, [{ opacity: 0, transform: `translate(-50%,-50%) scale(0) rotate(${rot - 90}deg)` },
+        { opacity: 1, transform: `translate(-50%,-50%) scale(1.35) rotate(${rot}deg)`, offset: .6 }, { opacity: 1, transform: `translate(-50%,-50%) scale(1) rotate(${rot}deg)` }], d, 380, "ease-out");
+      play(c, s, [{ transform: `translateY(${up}px)` }, { transform: `translateY(${-up}px)` }], d + 380, 300, "ease-in-out", { iterations: 12, direction: "alternate", composite: "add" });
+    });
+    if (calm) skip();                                                // still: everything is simply there, then fades
+    return R;
+  }
+  return { secret, badge, sixSeven, esc, stop: () => stop(true), playing: () => !!cur };
 })();
