@@ -20,6 +20,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  actions: read     # to check that the uploaded artifact is listed before deploying it
 
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
 # However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
@@ -49,6 +50,19 @@ jobs:
         with:
           # Upload entire repository
           path: '.'
+      # GitHub sometimes answers "no artifact found" for a few seconds after an upload that succeeded (the deploy step
+      # then fails with "Found 0 artifact(s)"). Wait until the artifact is listed, up to two minutes, then deploy.
+      - name: Wait until GitHub lists the uploaded artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for i in $(seq 1 24); do
+            n=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts?name=github-pages" --jq '.total_count' || echo 0)
+            echo "listed: $n"
+            [ "$n" -ge 1 ] && exit 0
+            sleep 5
+          done
+          echo "Not listed yet: deploying anyway"
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
