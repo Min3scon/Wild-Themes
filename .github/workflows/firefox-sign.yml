@@ -1,7 +1,9 @@
 # Signs the Firefox add-on with Mozilla so Firefox keeps it after a restart (self-distributed, "unlisted").
 # One-time setup: create a free account at https://addons.mozilla.org, then Tools > Manage API Keys, and
 # add the two values as repository secrets AMO_JWT_ISSUER and AMO_JWT_SECRET. Run this from the Actions tab.
-# Each signing needs a new "version" in extension/manifest.json. The signed .xpi is attached to the run.
+# Each signing needs a new "version" in extension/manifest.json. The signed file is attached to the run as
+# wild-themes-firefox.xpi: save it as downloads/wild-themes-firefox.xpi in the repository and commit it. The
+# website then shows Firefox users a one-click "Install in Firefox (signed)" button by itself.
 name: Sign Firefox add-on
 on:
   workflow_dispatch:
@@ -22,7 +24,9 @@ jobs:
           WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
           WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
         run: npx --yes web-ext@8 sign --source-dir "$RUNNER_TEMP/build/firefox" --artifacts-dir "$RUNNER_TEMP/signed" --channel unlisted
+      - name: Name the signed file
+        run: mv "$RUNNER_TEMP"/signed/*.xpi "$RUNNER_TEMP/signed/wild-themes-firefox.xpi"
       - uses: actions/upload-artifact@v4
         with:
           name: wild-themes-firefox-signed
-          path: ${{ runner.temp }}/signed/*.xpi
+          path: ${{ runner.temp }}/signed/wild-themes-firefox.xpi

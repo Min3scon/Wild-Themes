@@ -261,10 +261,32 @@ function openTheme(t) {
 function openInstall() {
   const body = openDialog("#t-install");
   $$(".copy", body).forEach((b) => b.onclick = async () => { try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = "Copied"; } catch (_) { b.textContent = "Select it"; } });
-  // show the steps for the browser being used; the other one is a click away
-  const pick = (name) => { $$("[data-browser]", body).forEach((d) => (d.hidden = d.dataset.browser !== name)); $$("[data-b]", body).forEach((b) => b.setAttribute("aria-pressed", b.dataset.b === name)); };
-  $$("[data-b]", body).forEach((b) => (b.onclick = () => pick(b.dataset.b)));
-  pick(/firefox/i.test(navigator.userAgent) && !/seamonkey/i.test(navigator.userAgent) ? "firefox" : "chrome");
+  // Every browser loads an add-on from a file in its own way: show the steps for the one in use
+  const BROWSERS = {
+    chrome: { name: "Chrome", kind: "chromium", addr: "chrome://extensions", dev: "Developer mode (top right)" },
+    edge: { name: "Edge", kind: "chromium", addr: "edge://extensions", dev: "Developer mode (left menu)" },
+    brave: { name: "Brave", kind: "chromium", addr: "brave://extensions", dev: "Developer mode (top right)" },
+    opera: { name: "Opera", kind: "chromium", addr: "opera://extensions", dev: "Developer mode (top right)" },
+    vivaldi: { name: "Vivaldi", kind: "chromium", addr: "vivaldi://extensions", dev: "Developer mode (top right)" },
+    arc: { name: "Arc", kind: "chromium", addr: "arc://extensions", dev: "Developer mode (top right)" },
+    firefox: { kind: "firefox" }, safari: { kind: "safari" },
+  };
+  const pick = (name) => {
+    const b = BROWSERS[name];
+    $$("[data-browser]", body).forEach((d) => (d.hidden = d.dataset.browser !== b.kind));
+    $$("[data-b]", body).forEach((x) => x.setAttribute("aria-pressed", x.dataset.b === name));
+    if (b.kind !== "chromium") return;
+    $("[data-bname]", body).textContent = b.name;
+    $("[data-addr]", body).textContent = b.addr;
+    $(".copy", $("[data-addr]", body).parentElement).dataset.copy = b.addr;
+    $("[data-dev]", body).textContent = b.dev;
+  };
+  $$("[data-b]", body).forEach((x) => (x.onclick = () => pick(x.dataset.b)));
+  const ua = navigator.userAgent;
+  pick(/firefox/i.test(ua) && !/seamonkey/i.test(ua) ? "firefox" : /\bEdg(e|A|iOS)?\//.test(ua) ? "edge" : /\bOPR\/|Opera/.test(ua) ? "opera"
+    : navigator.brave ? "brave" : /iPhone|iPad|Android/.test(ua) || (/Safari/.test(ua) && !/Chrome|Chromium/.test(ua)) ? "safari" : "chrome");
+  // once a signed copy is published (downloads/wild-themes-firefox.xpi), Firefox gets a one-click install
+  fetch("downloads/wild-themes-firefox.xpi", { method: "HEAD" }).then((r) => { if (r.ok) $("[data-signed]", body).hidden = false; }).catch(() => {});
 }
 
 // ---------- your own theme: built and used locally; shared only if you press Share

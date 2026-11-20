@@ -74,17 +74,28 @@ try { if (/[?&]host=office\b/.test(location.search)) sessionStorage.setItem("wt-
 </template>
 
 <template id="t-install">
-  <header class="dh"><h3 id="dlg-title">Add to your browser</h3><p class="by">Word, Google Docs and Teams on the web. Pick your browser:</p></header>
-  <div class="group" id="browsers" role="group" aria-label="Browser"><button class="btn btn-sm" data-b="chrome">Chrome, Edge, Brave</button><button class="btn btn-sm" data-b="firefox">Firefox</button></div>
-  <div data-browser="chrome">
-    <p class="fine">Chrome only installs in one click from its Web Store. Until Wild Themes is there, it's three steps.</p>
+  <header class="dh"><h3 id="dlg-title">Add to your browser</h3><p class="by">Word, Google Docs and Teams on the web. Every browser loads add-ons from a file its own way: pick yours.</p></header>
+  <div class="group" id="browsers" role="group" aria-label="Browser">
+    <button class="btn btn-sm" data-b="chrome">Chrome</button><button class="btn btn-sm" data-b="edge">Edge</button><button class="btn btn-sm" data-b="brave">Brave</button><button class="btn btn-sm" data-b="opera">Opera</button><button class="btn btn-sm" data-b="vivaldi">Vivaldi</button><button class="btn btn-sm" data-b="arc">Arc</button><button class="btn btn-sm" data-b="firefox">Firefox</button><button class="btn btn-sm" data-b="safari">Safari, phones</button>
+  </div>
+  <div data-browser="chromium">
+    <p class="fine"><span data-bname>Your browser</span> installs add-ons in one click only from its store, so until Wild Themes is there you load the unzipped folder. It takes a minute.</p>
     <a class="btn btn-primary btn-block" href="downloads/wild-themes-extension.zip" download><svg class="i" viewBox="0 0 24 24"><path d="M12 5v10M7 11l5 5 5-5M5 19h14"/></svg> Download the extension</a>
-    <ol class="steps"><li>Unzip the download.</li><li>Open <span class="cmd"><code>chrome://extensions</code><button class="btn btn-ghost btn-xs copy" data-copy="chrome://extensions">Copy</button></span> (Edge: <code>edge://extensions</code>) and turn on <b>Developer mode</b>.</li><li>Click <b>Load unpacked</b> and choose the unzipped folder.</li></ol>
+    <ol class="steps"><li>Unzip the download (Windows: right-click › <b>Extract All…</b>; Mac: double-click) and keep the folder: the browser reads the add-on from it.</li><li>Open <span class="cmd"><code data-addr>chrome://extensions</code><button class="btn btn-ghost btn-xs copy" data-copy="chrome://extensions">Copy</button></span> and turn on <b data-dev>Developer mode</b>.</li><li>Click <b>Load unpacked</b> and choose the folder that has <code>manifest.json</code> directly inside it.</li></ol>
+    <p class="fine">Expect a "developer mode extensions" notice when the browser starts. If you move or delete the folder, the add-on stops.</p>
   </div>
   <div data-browser="firefox" hidden>
-    <p class="fine">Firefox keeps an add-on after a restart only when Mozilla has signed it. Until Wild Themes is on addons.mozilla.org, you can load it for this session in two steps (do it again after restarting Firefox), or install it permanently in Firefox Developer Edition, Nightly or ESR.</p>
+    <p class="fine">Firefox only keeps an add-on after a restart when Mozilla has signed it. Pick the way that fits:</p>
+    <div data-signed hidden><a class="btn btn-primary btn-block" href="downloads/wild-themes-firefox.xpi"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v10M7 11l5 5 5-5M5 19h14"/></svg> Install in Firefox (signed)</a><p class="fine">Firefox asks to add it. Nothing else to do.</p></div>
+    <h4>For this session</h4>
     <a class="btn btn-primary btn-block" href="downloads/wild-themes-firefox.zip" download><svg class="i" viewBox="0 0 24 24"><path d="M12 5v10M7 11l5 5 5-5M5 19h14"/></svg> Download the Firefox add-on</a>
-    <ol class="steps"><li>Don't unzip it. Open <span class="cmd"><code>about:debugging#/runtime/this-firefox</code><button class="btn btn-ghost btn-xs copy" data-copy="about:debugging#/runtime/this-firefox">Copy</button></span>.</li><li>Click <b>Load Temporary Add-on…</b> and choose the downloaded zip.</li><li>Firefox treats access to websites as a permission you grant: if it asks about Word, Google Docs and Teams, allow it. If the scene doesn't show, open <span class="cmd"><code>about:addons</code></span>, click <b>Wild Themes › Permissions</b> and switch on access to those sites.</li></ol>
+    <ol class="steps"><li>Don't unzip it. Open <span class="cmd"><code>about:debugging#/runtime/this-firefox</code><button class="btn btn-ghost btn-xs copy" data-copy="about:debugging#/runtime/this-firefox">Copy</button></span>.</li><li>Click <b>Load Temporary Add-on…</b> and choose the downloaded zip. It stays until you quit Firefox; do this again next time.</li><li>Firefox treats access to websites as a permission you grant: if it asks about Word, Google Docs and Teams, allow it. If the scene doesn't show, open <span class="cmd"><code>about:addons</code></span>, click <b>Wild Themes › Permissions</b> and switch on access to those sites.</li></ol>
+    <h4>To keep it (Firefox Developer Edition, Nightly or ESR)</h4>
+    <ol class="steps"><li>Open <span class="cmd"><code>about:config</code></span> and set <code>xpinstall.signatures.required</code> to <code>false</code>. Regular Firefox ignores this setting.</li><li>Download <a href="downloads/wild-themes-firefox-unsigned.xpi" download>wild-themes-firefox-unsigned.xpi</a>, open <code>about:addons</code>, click <b>⚙ › Install Add-on From File…</b> and choose it.</li></ol>
+  </div>
+  <div data-browser="safari" hidden>
+    <p class="fine">Safari only runs add-ons that are built into a Mac app with Xcode and signed through Apple's developer program, so there is no download for it, and phone browsers (Chrome, Safari and Edge on iPhone and Android) can't load add-ons from a file at all. Firefox on Android only takes add-ons from Mozilla's store.</p>
+    <p class="fine">What still works there: themed files (they carry the theme, in any app on any device), the <a href="studio.html">File studio</a>, and the Office add-in. The live scene around the page needs a desktop browser from the list above.</p>
   </div>
   <h4>Want it in its own app window?</h4>
   <p class="fine">Open Teams or Word on the web in Edge or Chrome, then <b>⋮ › Apps › Install this site as an app</b> (Chrome: <b>⋮ › Cast, save and share › Install page as app</b>). It opens in its own window with a taskbar icon, and the theme comes with it. Use the Teams app window for Teams on your PC: the same theme as in the browser, on every page.</p>

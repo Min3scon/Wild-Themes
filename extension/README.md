@@ -24,21 +24,35 @@ Three parts that work together:
 
 ## Install the extension
 
-**Chrome, Edge, Brave, Arc**
+Browsers install add-ons in one click only from their own stores, so until Wild Themes is in them you load the files yourself. Each browser does it a little differently; the website's **Add to browser** button shows these steps for the browser you're using.
 
-1. Unzip `wild-themes-extension.zip`. You get a folder with `manifest.json` directly inside it.
-2. Open `chrome://extensions` (Chrome) or `edge://extensions` (Edge) and turn on **Developer mode**.
-3. Click **Load unpacked** and choose that folder (the one with `manifest.json` in it, not `icons` or `lib`).
-4. Pin it from the puzzle-piece menu.
+**Chrome, Edge, Brave, Opera, Vivaldi, Arc** (all load the same package, `wild-themes-extension.zip`)
 
-**Firefox** (version 140 or newer)
+1. Unzip it (Windows: right-click › Extract All…). Keep the folder: the browser reads the add-on from it. `manifest.json` must be directly inside the folder you pick.
+2. Open the browser's extensions page and turn on **Developer mode**:
 
-Firefox keeps an add-on after a restart only when Mozilla has signed it.
+   | Browser | Address | Developer mode switch |
+   |---|---|---|
+   | Chrome | `chrome://extensions` | top right |
+   | Edge | `edge://extensions` | left menu |
+   | Brave | `brave://extensions` | top right |
+   | Opera | `opera://extensions` | top right |
+   | Vivaldi | `vivaldi://extensions` | top right |
+   | Arc | `arc://extensions` | top right |
 
-- *Try it now (until Firefox restarts):* open `about:debugging#/runtime/this-firefox`, click **Load Temporary Add-on…** and choose `wild-themes-firefox.zip` (don't unzip it). Firefox treats access to websites as a permission you grant: allow it if asked; if the scene doesn't show, open `about:addons`, click Wild Themes › Permissions and switch on access to Word, Google Docs and Teams.
-- *Keep it:* use a signed copy (the repository's **Sign Firefox add-on** workflow makes one with a free Mozilla account; see `.github/workflows/firefox-sign.yml`), or in Firefox Developer Edition, Nightly or ESR set `xpinstall.signatures.required` to `false` in `about:config` and install the zip from **about:addons › ⚙ › Install Add-on From File…**.
+3. Click **Load unpacked** and choose the folder. Pin it from the puzzle-piece menu if you like. Expect a "developer mode extensions" notice when the browser starts.
 
-The Firefox package is this same folder with a different `manifest.json` (an event page instead of a service worker, an add-on id, and a declaration that nothing is collected). `node scripts/build-extension.js` builds both packages.
+**Firefox** (version 140 or newer; `wild-themes-firefox.zip`)
+
+Firefox keeps an add-on after a restart only when Mozilla has signed it. Three ways:
+
+- *Signed copy:* when `downloads/wild-themes-firefox.xpi` is published the website offers **Install in Firefox**. The repository's **Sign Firefox add-on** workflow makes that file with a free Mozilla account (`.github/workflows/firefox-sign.yml` says how).
+- *Until Firefox restarts:* open `about:debugging#/runtime/this-firefox`, click **Load Temporary Add-on…** and choose `wild-themes-firefox.zip` (don't unzip it), or the `manifest.json` inside an unzipped copy. Firefox treats access to websites as a permission you grant: allow it if asked; if the scene doesn't show, open `about:addons`, click Wild Themes › Permissions and switch on access to Word, Google Docs and Teams.
+- *Developer Edition, Nightly or ESR:* set `xpinstall.signatures.required` to `false` in `about:config` (regular Firefox ignores it), then **about:addons › ⚙ › Install Add-on From File…** and choose `wild-themes-firefox-unsigned.xpi` (the same file as the zip).
+
+**Safari and phones:** not supported. Safari only runs add-ons built into a Mac app with Xcode and signed through Apple's developer program (Apple's `safari-web-extension-converter` can start one from this folder; not tried). Phone browsers can't load add-ons from a file; Firefox for Android only takes add-ons from Mozilla's store. Themed files, the File studio and the Office add-in work everywhere.
+
+**Building the packages:** `node scripts/build-extension.js` writes both zips and the `.xpi` copy to `downloads/` (the site rebuilds them on every deploy); `--dir <folder>` writes unzipped folders instead, to load by hand. Loading `extension/` itself works in Chrome-family browsers; for Firefox use the built Firefox package, since its manifest differs (an event page instead of a service worker, an add-on id, a declaration that nothing is collected).
 
 ## Use it
 
