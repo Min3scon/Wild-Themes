@@ -155,3 +155,4 @@ code{font:13px var(--mono);color:var(--fg)}
 .look .switch{display:flex;gap:10px;align-items:flex-start;cursor:pointer}.look .switch input{margin-top:4px;accent-color:var(--accent)}
 .look small{display:block;color:var(--mfg);font-size:13px}.look .field{display:flex;flex-direction:column;gap:4px}
 .look input[type=range]{accent-color:var(--accent)}.look select{background:var(--card);color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:6px;font:inherit}
+[data-browser] .fine{margin:12px 0}

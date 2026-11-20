@@ -1,8 +1,10 @@
-// Wild Themes service worker.
+// Wild Themes background script (Chrome/Edge/Brave: service worker; Firefox: event page).
 // 1. Loads only the active scene's CSS into the Word frame that asked for it.
 // 2. Keeps the theme list in step with the website (catalog.json): new built-in scenes and
 //    approved community themes arrive by themselves, checked first, every few hours.
-importScripts("lib/themes.js", "lib/catalog.js");
+// Chrome runs this as a service worker and loads the helpers here; Firefox loads them from the
+// manifest's "scripts" list, before this file, and has no importScripts.
+if (typeof importScripts === "function") importScripts("lib/themes.js", "lib/catalog.js");
 const BUNDLED = self.WW_THEMES, C = self.WTCatalog;
 
 chrome.runtime.onMessage.addListener((m, s, reply) => {
@@ -48,7 +50,8 @@ async function cachePicture(id) {
   return true;
 }
 
-chrome.alarms.create("catalog", { periodInMinutes: 360 });
+// create it once: re-creating it each time the worker wakes would keep pushing the first run back
+chrome.alarms.get("catalog", (a) => { if (!a) chrome.alarms.create("catalog", { periodInMinutes: 360 }); });
 chrome.alarms.onAlarm.addListener((a) => { if (a.name === "catalog") sync().catch(() => {}); });
 chrome.runtime.onStartup.addListener(() => sync().catch(() => {}));
 chrome.runtime.onInstalled.addListener(({ reason }) => {
