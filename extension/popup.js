@@ -58,7 +58,7 @@ function render() {
 const open = (hash) => chrome.tabs.create({ url: chrome.runtime.getURL("options.html#" + hash) });
 $("#on").onchange = (e) => save({ on: e.target.checked });
 $("#sparks").onchange = (e) => save({ sparks: e.target.checked });
-for (const b of document.querySelectorAll("#motion button")) b.onclick = () => save({ motion: b.dataset.v });
+for (const b of document.querySelectorAll("#motion button")) b.onclick = () => { if (b.dataset.v === "auto") chrome.storage.local.remove("perf"); save({ motion: b.dataset.v }); };   // Auto measures again
 for (const b of document.querySelectorAll(".filter button")) b.onclick = () => { filter = b.dataset.f; render(); };
 $("#scope-doc").onclick = () => { scope = "doc"; render(); };
 $("#scope-all").onclick = () => { scope = "all"; render(); };
@@ -81,6 +81,11 @@ chrome.storage.sync.get(DEF, (v) => {
       chrome.tabs.sendMessage(tab.id, "ww-status", (r) => {
         if (chrome.runtime.lastError || !r || !r.docKey) return;
         status = r; scope = "doc";
+        if (r.google) {   // Google pages: if the scene isn't showing, copy what the extension sees so it can be fixed
+          $("#gnote").hidden = false;
+          $("#gstate").textContent = r.shown ? "Scene is on in this Google page." : "Scene isn't showing in this Google page.";
+          $("#gcopy").onclick = () => chrome.tabs.sendMessage(tab.id, "ww-details", (d) => navigator.clipboard.writeText(JSON.stringify(d, null, 1)).then(() => ($("#gstate").textContent = "Copied. Paste it in the chat."), () => ($("#gstate").textContent = "Couldn't copy.")));
+        }
         $("#doc").hidden = false;
         if (r.file) {
           const f = lookup(r.file.id);
