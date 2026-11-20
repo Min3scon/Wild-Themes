@@ -156,3 +156,4 @@ code{font:13px var(--mono);color:var(--fg)}
 .look small{display:block;color:var(--mfg);font-size:13px}.look .field{display:flex;flex-direction:column;gap:4px}
 .look input[type=range]{accent-color:var(--accent)}.look select{background:var(--card);color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:6px;font:inherit}
 [data-browser] .fine{margin:12px 0}
+#browsers{flex-wrap:wrap;gap:6px;margin:6px 0 14px}#browsers .btn{height:34px}[data-browser] h4{margin:16px 0 8px}
